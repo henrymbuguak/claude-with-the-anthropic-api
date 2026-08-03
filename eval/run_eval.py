@@ -22,7 +22,7 @@ from anthropic import Anthropic
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from config import Settings  # noqa: E402
+from app.config import Settings  # noqa: E402
 from eval.evaluators import JudgeParseError, run_llm_judge, run_rule_checks  # noqa: E402
 
 DEFAULT_CASES_PATH = Path(__file__).parent / "cases.jsonl"

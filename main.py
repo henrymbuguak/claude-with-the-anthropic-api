@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from claude_client import ChatClientError, ClaudeChatClient
-from config import ConfigError, Settings
-from conversation import Conversation
+from app.claude_client import ChatClientError, ClaudeChatClient
+from app.config import ConfigError, Settings
+from app.conversation import Conversation
 
 logger = logging.getLogger(__name__)
 

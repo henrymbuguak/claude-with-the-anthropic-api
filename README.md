@@ -6,10 +6,19 @@ A small Python project for experimenting with the Anthropic (Claude) API, includ
 
 An interactive, multi-turn chat CLI for Claude, split into small, testable modules:
 
-- **`config.py`** — Loads and validates all settings from environment variables (`.env`) into a `Settings` dataclass. Fails fast with a clear error if `ANTHROPIC_API_KEY` is missing or a numeric setting is malformed.
-- **`conversation.py`** — `Conversation` holds the message history (`add_user_message`/`add_assistant_message`) and can `save()`/`load()` it to/from JSON so a session can be resumed later.
-- **`claude_client.py`** — `ClaudeChatClient` wraps the Anthropic SDK: streams responses token-by-token, reports token usage, and translates SDK exceptions (`RateLimitError`, `APIConnectionError`, `APIStatusError`) into a single friendly `ChatClientError`.
+- **`app/config.py`** — Loads and validates all settings from environment variables (`.env`) into a `Settings` dataclass. Fails fast with a clear error if `ANTHROPIC_API_KEY` is missing or a numeric setting is malformed.
+- **`app/conversation.py`** — `Conversation` holds the message history (`add_user_message`/`add_assistant_message`) and can `save()`/`load()` it to/from JSON so a session can be resumed later.
+- **`app/claude_client.py`** — `ClaudeChatClient` wraps the Anthropic SDK: streams responses token-by-token, reports token usage, and translates SDK exceptions (`RateLimitError`, `APIConnectionError`, `APIStatusError`) into a single friendly `ChatClientError`.
 - **`main.py`** — The CLI entry point. Loads settings, resumes any saved conversation, then runs an input loop until the user types `exit` (or presses Ctrl+C).
+
+## Project Layout
+
+```
+app/            # core library: config, conversation state, Claude API client
+main.py         # CLI entry point
+prompts/        # versioned system prompt files
+eval/           # prompt evaluation harness (cases, evaluators, runner, results)
+```
 
 ## Dependencies
 

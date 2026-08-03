@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from anthropic import Anthropic, APIConnectionError, APIStatusError, RateLimitError, omit
 
-from config import Settings
+from app.config import Settings
 
 
 class ChatClientError(RuntimeError):
