@@ -4,11 +4,12 @@ A small Python project for experimenting with the Anthropic (Claude) API, includ
 
 ## What's Here
 
-- **`main.py`** — Demonstrates a multi-turn chat with Claude:
-  - `add_user_message(messages, user_input)` — appends a user turn to the conversation history
-  - `add_assistant_message(messages, assistant_response)` — appends an assistant turn to the conversation history
-  - `chat(messages)` — sends the full message history to the Claude API and returns the reply text
-  - Example flow: ask a question, capture the assistant's reply, add it back to history, then ask a follow-up so Claude retains context across turns
+An interactive, multi-turn chat CLI for Claude, split into small, testable modules:
+
+- **`config.py`** — Loads and validates all settings from environment variables (`.env`) into a `Settings` dataclass. Fails fast with a clear error if `ANTHROPIC_API_KEY` is missing or a numeric setting is malformed.
+- **`conversation.py`** — `Conversation` holds the message history (`add_user_message`/`add_assistant_message`) and can `save()`/`load()` it to/from JSON so a session can be resumed later.
+- **`claude_client.py`** — `ClaudeChatClient` wraps the Anthropic SDK: streams responses token-by-token, reports token usage, and translates SDK exceptions (`RateLimitError`, `APIConnectionError`, `APIStatusError`) into a single friendly `ChatClientError`.
+- **`main.py`** — The CLI entry point. Loads settings, resumes any saved conversation, then runs an input loop until the user types `exit` (or presses Ctrl+C).
 
 ## Dependencies
 
@@ -34,24 +35,33 @@ uv export --no-hashes --no-dev -o requirements.txt
    pip install -r requirements.txt
    ```
 
-2. **Configure your API key** — create a `.env` file in the project root:
+2. **Configure your environment** — copy `.env.example` to `.env` and fill in your API key:
 
-   ```dotenv
-   ANTHROPIC_API_KEY=your-api-key-here
+   ```powershell
+   Copy-Item .env.example .env
    ```
 
-   > Never commit your real API key. `.env` is already excluded via `.gitignore`.
+   | Variable                    | Required | Default                     | Description                                             |
+   | --------------------------- | -------- | --------------------------- | ------------------------------------------------------- |
+   | `ANTHROPIC_API_KEY`         | Yes      | —                           | Your Anthropic API key                                  |
+   | `ANTHROPIC_MODEL`           | No       | `claude-sonnet-4-6`         | Model used for chat completions                         |
+   | `ANTHROPIC_MAX_TOKENS`      | No       | `500`                       | Max tokens generated per response                       |
+   | `ANTHROPIC_TEMPERATURE`     | No       | `1.0`                       | Sampling temperature                                    |
+   | `ANTHROPIC_SYSTEM_PROMPT`   | No       | _(none)_                    | System prompt applied to every conversation             |
+   | `LOG_LEVEL`                 | No       | `INFO`                      | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+   | `CONVERSATION_HISTORY_FILE` | No       | `conversation_history.json` | Where the conversation is saved/resumed from            |
 
-3. **Run the script**:
+   > Never commit your real API key. `.env` is already excluded via `.gitignore`; only `.env.example` (no secrets) is tracked.
+
+3. **Run the CLI**:
    ```powershell
    uv run main.py
    ```
-
-## Model
-
-The script currently uses `claude-sonnet-4-6` (configured via the `model` variable in [main.py](main.py)).
+   Type a question, get a streamed reply, and keep chatting — type `exit` (or press Ctrl+C) to quit. The conversation is saved to `CONVERSATION_HISTORY_FILE` after every turn and automatically resumed on the next run.
 
 ## Notes
 
-- Conversation history is kept as a list of `{"role": ..., "content": ...}` dicts and passed to `client.messages.create(...)` on each turn, which is how Claude "remembers" prior turns (the API itself is stateless).
-- `.gitignore` covers Python caches, virtual environments (`.venv`), and `.env` secrets so they aren't accidentally committed, while `pyproject.toml`, `uv.lock`, and `requirements.txt` are tracked for reproducible installs.
+- Conversation history is kept as a list of `{"role": ..., "content": ...}` dicts, persisted to JSON, and replayed on each turn to `client.messages.create(...)`, which is how Claude "remembers" prior turns (the API itself is stateless).
+- Streaming uses `client.messages.stream(...)`; token usage (`input_tokens`/`output_tokens`) is logged at `DEBUG` level for cost visibility.
+- API errors (rate limits, connection issues, non-2xx responses) surface as a single friendly `ChatClientError` instead of a raw SDK traceback, and the unanswered user turn is rolled back so the conversation stays consistent.
+- `.gitignore` covers Python caches, virtual environments (`.venv`), `.env` secrets, and the local `conversation_history.json`, while `pyproject.toml`, `uv.lock`, `requirements.txt`, and `.env.example` are tracked for reproducible, secret-free setup.

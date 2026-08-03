@@ -92,6 +92,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Runtime conversation history (per-user, not source)
+conversation_history.json
+
 # Spyder project settings
 .spyderproject
 .spyproject
