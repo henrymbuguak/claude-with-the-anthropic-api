@@ -57,7 +57,7 @@ profile_default/
 ipython_config.py
 
 # pyenv
-.python-version
+# (uv/pyenv version pin is intentionally tracked - see below)
 
 # pipenv
 Pipfile.lock
@@ -69,7 +69,7 @@ poetry.lock
 .pdm.toml
 
 # uv
-uv.lock
+# (uv.lock is intentionally tracked for reproducible installs)
 
 # PEP 582
 __pypackages__/
