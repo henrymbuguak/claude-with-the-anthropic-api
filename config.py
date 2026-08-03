@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -27,7 +28,7 @@ class Settings:
     history_file: str
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         """Build validated settings from environment variables, failing fast on errors."""
         api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
         if not api_key:
@@ -52,13 +53,31 @@ class Settings:
                 f"ANTHROPIC_TEMPERATURE must be a number, got {temperature_raw!r}"
             ) from exc
 
+        system_prompt = cls._load_system_prompt()
+
         return cls(
             api_key=api_key,
             model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
             max_tokens=max_tokens,
             temperature=temperature,
-            system_prompt=os.getenv("ANTHROPIC_SYSTEM_PROMPT") or None,
+            system_prompt=system_prompt,
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
             history_file=os.getenv(
                 "CONVERSATION_HISTORY_FILE", "conversation_history.json"),
         )
+
+    @staticmethod
+    def _load_system_prompt() -> str | None:
+        """Prefer a versioned prompt file (ANTHROPIC_SYSTEM_PROMPT_FILE) so prompts
+        can be tracked, diffed, and run through the eval harness. Falls back to the
+        inline ANTHROPIC_SYSTEM_PROMPT env var for simple setups."""
+        prompt_file = os.getenv("ANTHROPIC_SYSTEM_PROMPT_FILE", "").strip()
+        if prompt_file:
+            path = Path(prompt_file)
+            if not path.exists():
+                raise ConfigError(
+                    f"ANTHROPIC_SYSTEM_PROMPT_FILE points to a missing file: {path}"
+                )
+            return path.read_text(encoding="utf-8").strip()
+
+        return os.getenv("ANTHROPIC_SYSTEM_PROMPT") or None

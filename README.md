@@ -41,15 +41,16 @@ uv export --no-hashes --no-dev -o requirements.txt
    Copy-Item .env.example .env
    ```
 
-   | Variable                    | Required | Default                     | Description                                             |
-   | --------------------------- | -------- | --------------------------- | ------------------------------------------------------- |
-   | `ANTHROPIC_API_KEY`         | Yes      | —                           | Your Anthropic API key                                  |
-   | `ANTHROPIC_MODEL`           | No       | `claude-sonnet-4-6`         | Model used for chat completions                         |
-   | `ANTHROPIC_MAX_TOKENS`      | No       | `500`                       | Max tokens generated per response                       |
-   | `ANTHROPIC_TEMPERATURE`     | No       | `1.0`                       | Sampling temperature                                    |
-   | `ANTHROPIC_SYSTEM_PROMPT`   | No       | _(none)_                    | System prompt applied to every conversation             |
-   | `LOG_LEVEL`                 | No       | `INFO`                      | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-   | `CONVERSATION_HISTORY_FILE` | No       | `conversation_history.json` | Where the conversation is saved/resumed from            |
+   | Variable                       | Required | Default                     | Description                                              |
+   | ------------------------------ | -------- | --------------------------- | -------------------------------------------------------- |
+   | `ANTHROPIC_API_KEY`            | Yes      | —                           | Your Anthropic API key                                   |
+   | `ANTHROPIC_MODEL`              | No       | `claude-sonnet-4-6`         | Model used for chat completions                          |
+   | `ANTHROPIC_MAX_TOKENS`         | No       | `500`                       | Max tokens generated per response                        |
+   | `ANTHROPIC_TEMPERATURE`        | No       | `1.0`                       | Sampling temperature                                     |
+   | `ANTHROPIC_SYSTEM_PROMPT_FILE` | No       | _(none)_                    | Path to a versioned system prompt file (see `prompts/`)  |
+   | `ANTHROPIC_SYSTEM_PROMPT`      | No       | _(none)_                    | Inline system prompt, used only if the file var is unset |
+   | `LOG_LEVEL`                    | No       | `INFO`                      | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`)  |
+   | `CONVERSATION_HISTORY_FILE`    | No       | `conversation_history.json` | Where the conversation is saved/resumed from             |
 
    > Never commit your real API key. `.env` is already excluded via `.gitignore`; only `.env.example` (no secrets) is tracked.
 
@@ -58,6 +59,25 @@ uv export --no-hashes --no-dev -o requirements.txt
    uv run main.py
    ```
    Type a question, get a streamed reply, and keep chatting — type `exit` (or press Ctrl+C) to quit. The conversation is saved to `CONVERSATION_HISTORY_FILE` after every turn and automatically resumed on the next run.
+
+## Prompt Evaluation Workflow
+
+System prompts are versioned as plain text files in `prompts/` (e.g. `prompts/scientist_v1.txt`) instead of being buried in `.env`, so changes are diffable in git and testable before being adopted.
+
+- **`eval/cases.jsonl`** — a fixed set of test questions (JSONL), covering edge cases like emotionally charged topics, casual phrasing, and uncertain science.
+- **`eval/evaluators.py`** — two evaluator types:
+  - Rule-based checks (`run_rule_checks`): cheap, deterministic checks for banned hype words, exclamation-mark overuse, and response length.
+  - LLM-as-judge (`run_llm_judge`): asks Claude to score a response 1–5 on `active_voice`, `calm_tone`, and `evidence_grounded`, with a justification — used for subjective/linguistic criteria that regex can't reliably catch.
+- **`eval/run_eval.py`** — the harness. Runs every case in `eval/cases.jsonl` through a given prompt file, applies both evaluator types, prints a summary table, and saves a JSON report to `eval/results/`:
+  ```powershell
+  uv run eval/run_eval.py prompts/scientist_v1.txt
+  ```
+- **`eval/compare.py`** — runs the same case set against two prompt versions side-by-side, to check whether an edit actually improves scores before adopting it:
+  ```powershell
+  uv run eval/compare.py prompts/scientist_v1.txt prompts/scientist_v2.txt
+  ```
+
+To adopt a new prompt version, point `ANTHROPIC_SYSTEM_PROMPT_FILE` in `.env` at the new file once its eval scores look good.
 
 ## Notes
 
