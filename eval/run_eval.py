@@ -15,15 +15,19 @@ import argparse
 import json
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from anthropic import Anthropic
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.config import Settings  # noqa: E402
-from eval.evaluators import JudgeParseError, run_llm_judge, run_rule_checks  # noqa: E402
+from app.config import Settings
+from eval.evaluators import (
+    JudgeParseError,
+    run_llm_judge,
+    run_rule_checks,
+)
 
 DEFAULT_CASES_PATH = Path(__file__).parent / "cases.jsonl"
 RESULTS_DIR = Path(__file__).parent / "results"
@@ -132,7 +136,7 @@ def print_summary(prompt_path: Path, results: list[CaseResult]) -> None:
 
 def save_report(prompt_path: Path, results: list[CaseResult]) -> Path:
     RESULTS_DIR.mkdir(exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     report_path = RESULTS_DIR / f"{prompt_path.stem}_{timestamp}.json"
     payload = {
         "prompt_file": str(prompt_path),

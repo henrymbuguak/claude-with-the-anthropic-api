@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from eval.run_eval import DEFAULT_CASES_PATH, print_summary, run  # noqa: E402
+from eval.run_eval import DEFAULT_CASES_PATH, print_summary, run
 
 
 def main() -> None:

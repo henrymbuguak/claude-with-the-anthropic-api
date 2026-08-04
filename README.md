@@ -18,6 +18,15 @@ app/            # core library: config, conversation state, Claude API client
 main.py         # CLI entry point
 prompts/        # versioned system prompt files
 eval/           # prompt evaluation harness (cases, evaluators, runner, results)
+tests/          # unit tests (pytest)
+```
+
+## Testing
+
+Unit tests cover `app/config.py`, `app/conversation.py`, `app/claude_client.py`, and `eval/evaluators.py`, mocking the Anthropic SDK so no real API calls are made:
+
+```powershell
+uv run pytest
 ```
 
 ## Dependencies

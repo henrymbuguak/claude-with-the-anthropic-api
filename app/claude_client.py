@@ -5,7 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from anthropic import Anthropic, APIConnectionError, APIStatusError, RateLimitError, omit
+from anthropic import (
+    Anthropic,
+    APIConnectionError,
+    APIStatusError,
+    RateLimitError,
+    omit,
+)
 
 from app.config import Settings
 
