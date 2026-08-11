@@ -5,11 +5,23 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from app.claude_client import ChatClientError, ClaudeChatClient
+from app.claude_client import ChatClientError, Citation, ClaudeChatClient
 from app.config import ConfigError, Settings
 from app.conversation import Conversation
 
 logger = logging.getLogger(__name__)
+
+
+def format_sources(citations: list[Citation]) -> str:
+    """Format web citations as a compact numbered source list."""
+    if not citations:
+        return ""
+    lines = ["Sources:"]
+    lines.extend(
+        f"[{index}] {citation.title or citation.url} - {citation.url}"
+        for index, citation in enumerate(citations, start=1)
+    )
+    return "\n".join(lines)
 
 
 def run_chat_loop(client: ClaudeChatClient, conversation: Conversation, history_path: Path) -> None:
@@ -43,8 +55,14 @@ def run_chat_loop(client: ClaudeChatClient, conversation: Conversation, history_
             continue
 
         print("\n")
+        sources = format_sources(response.citations)
+        if sources:
+            print(f"{sources}\n")
         logger.debug(
-            "Tokens used - input: %s, output: %s", response.input_tokens, response.output_tokens
+            "Usage - input tokens: %s, output tokens: %s, web searches: %s",
+            response.input_tokens,
+            response.output_tokens,
+            response.web_search_requests,
         )
         conversation.add_assistant_message(response.text)
         conversation.save(history_path)

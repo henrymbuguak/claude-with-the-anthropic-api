@@ -26,6 +26,9 @@ class Settings:
     system_prompt: str | None
     log_level: str
     history_file: str
+    web_search_enabled: bool
+    web_search_max_uses: int
+    web_search_allowed_domains: list[str] | None
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -38,6 +41,10 @@ class Settings:
 
         max_tokens_raw = os.getenv("ANTHROPIC_MAX_TOKENS", "500")
         temperature_raw = os.getenv("ANTHROPIC_TEMPERATURE", "1.0")
+        web_search_enabled_raw = os.getenv(
+            "ANTHROPIC_WEB_SEARCH_ENABLED", "false").strip().lower()
+        web_search_max_uses_raw = os.getenv(
+            "ANTHROPIC_WEB_SEARCH_MAX_USES", "3")
 
         try:
             max_tokens = int(max_tokens_raw)
@@ -53,6 +60,31 @@ class Settings:
                 f"ANTHROPIC_TEMPERATURE must be a number, got {temperature_raw!r}"
             ) from exc
 
+        if web_search_enabled_raw not in {"true", "false"}:
+            raise ConfigError(
+                "ANTHROPIC_WEB_SEARCH_ENABLED must be 'true' or 'false', "
+                f"got {web_search_enabled_raw!r}"
+            )
+
+        try:
+            web_search_max_uses = int(web_search_max_uses_raw)
+        except ValueError as exc:
+            raise ConfigError(
+                "ANTHROPIC_WEB_SEARCH_MAX_USES must be an integer, "
+                f"got {web_search_max_uses_raw!r}"
+            ) from exc
+        if web_search_max_uses < 1:
+            raise ConfigError(
+                "ANTHROPIC_WEB_SEARCH_MAX_USES must be greater than zero"
+            )
+
+        allowed_domains = [
+            domain.strip().lower()
+            for domain in os.getenv(
+                "ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS", "").split(",")
+            if domain.strip()
+        ]
+
         system_prompt = cls._load_system_prompt()
 
         return cls(
@@ -64,6 +96,9 @@ class Settings:
             log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
             history_file=os.getenv(
                 "CONVERSATION_HISTORY_FILE", "conversation_history.json"),
+            web_search_enabled=web_search_enabled_raw == "true",
+            web_search_max_uses=web_search_max_uses,
+            web_search_allowed_domains=allowed_domains or None,
         )
 
     @staticmethod

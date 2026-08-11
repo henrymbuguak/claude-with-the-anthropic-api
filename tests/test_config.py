@@ -17,6 +17,9 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "ANTHROPIC_TEMPERATURE",
         "ANTHROPIC_SYSTEM_PROMPT_FILE",
         "ANTHROPIC_SYSTEM_PROMPT",
+        "ANTHROPIC_WEB_SEARCH_ENABLED",
+        "ANTHROPIC_WEB_SEARCH_MAX_USES",
+        "ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS",
         "LOG_LEVEL",
         "CONVERSATION_HISTORY_FILE",
     ):
@@ -40,6 +43,9 @@ def test_from_env_uses_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.system_prompt is None
     assert settings.log_level == "INFO"
     assert settings.history_file == "conversation_history.json"
+    assert settings.web_search_enabled is False
+    assert settings.web_search_max_uses == 3
+    assert settings.web_search_allowed_domains is None
 
 
 def test_from_env_reads_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -47,6 +53,10 @@ def test_from_env_reads_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ANTHROPIC_MODEL", "claude-test-model")
     monkeypatch.setenv("ANTHROPIC_MAX_TOKENS", "1024")
     monkeypatch.setenv("ANTHROPIC_TEMPERATURE", "0.5")
+    monkeypatch.setenv("ANTHROPIC_WEB_SEARCH_ENABLED", "true")
+    monkeypatch.setenv("ANTHROPIC_WEB_SEARCH_MAX_USES", "5")
+    monkeypatch.setenv(
+        "ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS", " WHO.INT, cdc.gov ")
     monkeypatch.setenv("LOG_LEVEL", "debug")
     monkeypatch.setenv("CONVERSATION_HISTORY_FILE", "history.json")
 
@@ -55,6 +65,9 @@ def test_from_env_reads_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.model == "claude-test-model"
     assert settings.max_tokens == 1024
     assert settings.temperature == 0.5
+    assert settings.web_search_enabled is True
+    assert settings.web_search_max_uses == 5
+    assert settings.web_search_allowed_domains == ["who.int", "cdc.gov"]
     assert settings.log_level == "DEBUG"
     assert settings.history_file == "history.json"
 
@@ -72,6 +85,28 @@ def test_from_env_rejects_non_numeric_temperature(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("ANTHROPIC_TEMPERATURE", "not-a-number")
 
     with pytest.raises(ConfigError, match="ANTHROPIC_TEMPERATURE"):
+        Settings.from_env()
+
+
+@pytest.mark.parametrize("value", ["yes", "1", "enabled"])
+def test_from_env_rejects_invalid_web_search_boolean(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_WEB_SEARCH_ENABLED", value)
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_WEB_SEARCH_ENABLED"):
+        Settings.from_env()
+
+
+@pytest.mark.parametrize("value", ["invalid", "0", "-1"])
+def test_from_env_rejects_invalid_web_search_max_uses(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_WEB_SEARCH_MAX_USES", value)
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_WEB_SEARCH_MAX_USES"):
         Settings.from_env()
 
 
