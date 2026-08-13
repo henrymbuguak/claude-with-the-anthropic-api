@@ -1,0 +1,1 @@
+FROM ghcr.io/charmbracelet/vhs:v0.11.0

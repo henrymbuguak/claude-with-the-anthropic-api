@@ -28,6 +28,17 @@ tested modules rather than one monolithic script.
   to A/B test system prompt revisions before adopting them.
 - 97 tests, `ruff`-clean, and CI running both on every push.
 
+## CLI Demo
+
+<p align="center">
+  <a href="docs/cli-demo.mp4">
+    <img src="docs/cli-demo.gif" alt="Claude CLI answering a question with local RAG sources" width="900">
+  </a>
+</p>
+
+The animation shows the normal `uv run python main.py` workflow. Select it to
+open the MP4 version.
+
 ## Architecture
 
 ```mermaid
@@ -296,6 +307,22 @@ uv export --no-hashes --no-dev -o requirements.txt
    uv run main.py
    ```
    Type a question, get a streamed reply, and keep chatting — type `exit` (or press Ctrl+C) to quit. The conversation is saved to `CONVERSATION_HISTORY_FILE` after every turn and automatically resumed on the next run.
+
+### Regenerate the CLI demo
+
+The README animation is scripted with
+[VHS](https://github.com/charmbracelet/vhs). With Docker Desktop running, build
+the pinned recording image and render both assets from the repository root:
+
+```powershell
+docker build --tag claude-cli-vhs --file demo/Dockerfile .
+docker run --rm --volume "${PWD}:/vhs" claude-cli-vhs demo/cli.tape
+```
+
+The tape uses `demo/cli_demo.py`, a deterministic fixture matching the real
+CLI's prompts, streaming response, and local-source formatting. Regeneration
+therefore requires no API keys, makes no paid API calls, and produces stable
+documentation even when model output changes.
 
 ## Web Search
 
