@@ -43,6 +43,13 @@ def format_local_sources(results: list[SearchResult]) -> str:
     return "\n".join(lines)
 
 
+def format_thinking(thinking_text: str) -> str:
+    """Format Claude's extended thinking summary for display; never persisted to history."""
+    if not thinking_text:
+        return ""
+    return f"Thinking:\n{thinking_text}"
+
+
 def run_chat_loop(
     client: ClaudeChatClient,
     conversation: Conversation,
@@ -102,6 +109,9 @@ def run_chat_loop(
             continue
 
         print("\n")
+        thinking_block = format_thinking(response.thinking_text)
+        if thinking_block:
+            print(f"{thinking_block}\n")
         sources = format_sources(response.citations)
         if sources:
             print(f"{sources}\n")
@@ -109,10 +119,13 @@ def run_chat_loop(
         if local_sources_text:
             print(f"{local_sources_text}\n")
         logger.debug(
-            "Usage - input tokens: %s, output tokens: %s, web searches: %s",
+            "Usage - input tokens: %s, output tokens: %s, web searches: %s, "
+            "cache write tokens: %s, cache read tokens: %s",
             response.input_tokens,
             response.output_tokens,
             response.web_search_requests,
+            response.cache_creation_input_tokens,
+            response.cache_read_input_tokens,
         )
         conversation.add_assistant_message(response.text)
         conversation.save(history_path)

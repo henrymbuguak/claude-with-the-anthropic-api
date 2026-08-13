@@ -20,6 +20,9 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "ANTHROPIC_WEB_SEARCH_ENABLED",
         "ANTHROPIC_WEB_SEARCH_MAX_USES",
         "ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS",
+        "ANTHROPIC_THINKING_ENABLED",
+        "ANTHROPIC_THINKING_BUDGET_TOKENS",
+        "ANTHROPIC_PROMPT_CACHE_ENABLED",
         "LOG_LEVEL",
         "CONVERSATION_HISTORY_FILE",
     ):
@@ -46,6 +49,9 @@ def test_from_env_uses_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.web_search_enabled is False
     assert settings.web_search_max_uses == 3
     assert settings.web_search_allowed_domains is None
+    assert settings.thinking_enabled is False
+    assert settings.thinking_budget_tokens == 10000
+    assert settings.prompt_cache_enabled is False
 
 
 def test_from_env_reads_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -140,4 +146,94 @@ def test_system_prompt_file_missing_raises(monkeypatch: pytest.MonkeyPatch, tmp_
                        str(tmp_path / "missing.txt"))
 
     with pytest.raises(ConfigError, match="missing file"):
+        Settings.from_env()
+
+
+def test_from_env_enables_thinking_with_valid_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_MAX_TOKENS", "16000")
+    monkeypatch.setenv("ANTHROPIC_THINKING_ENABLED", "true")
+    monkeypatch.setenv("ANTHROPIC_THINKING_BUDGET_TOKENS", "10000")
+
+    settings = Settings.from_env()
+
+    assert settings.thinking_enabled is True
+    assert settings.thinking_budget_tokens == 10000
+
+
+@pytest.mark.parametrize("value", ["yes", "1", "enabled"])
+def test_from_env_rejects_invalid_thinking_boolean(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_THINKING_ENABLED", value)
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_THINKING_ENABLED"):
+        Settings.from_env()
+
+
+def test_from_env_rejects_non_integer_thinking_budget_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_THINKING_BUDGET_TOKENS", "not-a-number")
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_THINKING_BUDGET_TOKENS"):
+        Settings.from_env()
+
+
+def test_from_env_rejects_thinking_budget_below_minimum(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_MAX_TOKENS", "16000")
+    monkeypatch.setenv("ANTHROPIC_THINKING_ENABLED", "true")
+    monkeypatch.setenv("ANTHROPIC_THINKING_BUDGET_TOKENS", "100")
+
+    with pytest.raises(ConfigError, match="at least 1024"):
+        Settings.from_env()
+
+
+def test_from_env_rejects_thinking_budget_not_less_than_max_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_MAX_TOKENS", "5000")
+    monkeypatch.setenv("ANTHROPIC_THINKING_ENABLED", "true")
+    monkeypatch.setenv("ANTHROPIC_THINKING_BUDGET_TOKENS", "5000")
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_MAX_TOKENS must be greater than"):
+        Settings.from_env()
+
+
+def test_from_env_rejects_custom_temperature_with_thinking_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_MAX_TOKENS", "16000")
+    monkeypatch.setenv("ANTHROPIC_THINKING_ENABLED", "true")
+    monkeypatch.setenv("ANTHROPIC_THINKING_BUDGET_TOKENS", "10000")
+    monkeypatch.setenv("ANTHROPIC_TEMPERATURE", "0.5")
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_TEMPERATURE cannot be customized"):
+        Settings.from_env()
+
+
+def test_from_env_enables_prompt_cache(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_PROMPT_CACHE_ENABLED", "true")
+
+    settings = Settings.from_env()
+
+    assert settings.prompt_cache_enabled is True
+
+
+@pytest.mark.parametrize("value", ["yes", "1", "enabled"])
+def test_from_env_rejects_invalid_prompt_cache_boolean(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_PROMPT_CACHE_ENABLED", value)
+
+    with pytest.raises(ConfigError, match="ANTHROPIC_PROMPT_CACHE_ENABLED"):
         Settings.from_env()

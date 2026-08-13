@@ -25,6 +25,9 @@ def make_settings(**overrides) -> Settings:
         "web_search_enabled": False,
         "web_search_max_uses": 3,
         "web_search_allowed_domains": None,
+        "thinking_enabled": False,
+        "thinking_budget_tokens": 10000,
+        "prompt_cache_enabled": False,
     }
     defaults.update(overrides)
     return Settings(**defaults)
@@ -36,9 +39,15 @@ def make_final_message(
     output_tokens: int = 20,
     citations=None,
     web_search_requests: int = 0,
+    thinking_blocks: list | None = None,
+    cache_creation_input_tokens: int = 0,
+    cache_read_input_tokens: int = 0,
 ):
+    content = list(thinking_blocks or [])
+    content.append(SimpleNamespace(
+        type="text", text=text, citations=citations))
     return SimpleNamespace(
-        content=[SimpleNamespace(type="text", text=text, citations=citations)],
+        content=content,
         usage=SimpleNamespace(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
@@ -47,6 +56,8 @@ def make_final_message(
                 if web_search_requests
                 else None
             ),
+            cache_creation_input_tokens=cache_creation_input_tokens,
+            cache_read_input_tokens=cache_read_input_tokens,
         ),
     )
 
@@ -248,3 +259,124 @@ def test_stream_message_wraps_status_error(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(ChatClientError, match="500"):
         client.stream_message([{"role": "user", "content": "Hi"}])
+
+
+def test_stream_message_omits_thinking_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    final_message = make_final_message("ok")
+    messages = FakeMessages(stream_result=FakeStream(["ok"], final_message))
+    client = build_client(make_settings(
+        thinking_enabled=False), messages, monkeypatch)
+
+    response = client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert messages.last_kwargs["thinking"] is omit
+    assert messages.last_kwargs["temperature"] == 1.0
+    assert response.thinking_text == ""
+
+
+def test_stream_message_enables_configured_thinking_and_omits_temperature(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    final_message = make_final_message("ok")
+    messages = FakeMessages(stream_result=FakeStream(["ok"], final_message))
+    client = build_client(
+        make_settings(thinking_enabled=True, thinking_budget_tokens=5000),
+        messages,
+        monkeypatch,
+    )
+
+    client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert messages.last_kwargs["thinking"] == {
+        "type": "enabled",
+        "budget_tokens": 5000,
+        "display": "summarized",
+    }
+    assert messages.last_kwargs["temperature"] is omit
+
+
+def test_stream_message_extracts_thinking_text_and_flags_redacted_blocks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    thinking_blocks = [
+        SimpleNamespace(type="thinking", thinking="Step one, then step two."),
+        SimpleNamespace(type="redacted_thinking", data="encrypted"),
+    ]
+    final_message = make_final_message(
+        "Final answer.", thinking_blocks=thinking_blocks)
+    messages = FakeMessages(
+        stream_result=FakeStream(["Final answer."], final_message))
+    client = build_client(make_settings(
+        thinking_enabled=True), messages, monkeypatch)
+
+    response = client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert response.text == "Final answer."
+    assert response.thinking_text == (
+        "Step one, then step two.\n\n[redacted reasoning]"
+    )
+
+
+def test_stream_message_sends_plain_system_string_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    final_message = make_final_message("ok")
+    messages = FakeMessages(stream_result=FakeStream(["ok"], final_message))
+    client = build_client(
+        make_settings(system_prompt="Be helpful."), messages, monkeypatch
+    )
+
+    client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert messages.last_kwargs["system"] == "Be helpful."
+
+
+def test_stream_message_caches_system_prompt_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    final_message = make_final_message("ok")
+    messages = FakeMessages(stream_result=FakeStream(["ok"], final_message))
+    client = build_client(
+        make_settings(system_prompt="Be helpful.", prompt_cache_enabled=True),
+        messages,
+        monkeypatch,
+    )
+
+    client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert messages.last_kwargs["system"] == [
+        {
+            "type": "text",
+            "text": "Be helpful.",
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+
+
+def test_stream_message_skips_cache_control_without_system_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    final_message = make_final_message("ok")
+    messages = FakeMessages(stream_result=FakeStream(["ok"], final_message))
+    client = build_client(
+        make_settings(system_prompt=None, prompt_cache_enabled=True),
+        messages,
+        monkeypatch,
+    )
+
+    client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert messages.last_kwargs["system"] is omit
+
+
+def test_stream_message_reports_cache_usage(monkeypatch: pytest.MonkeyPatch) -> None:
+    final_message = make_final_message(
+        "ok", cache_creation_input_tokens=123, cache_read_input_tokens=456
+    )
+    messages = FakeMessages(stream_result=FakeStream(["ok"], final_message))
+    client = build_client(make_settings(), messages, monkeypatch)
+
+    response = client.stream_message([{"role": "user", "content": "Hi"}])
+
+    assert response.cache_creation_input_tokens == 123
+    assert response.cache_read_input_tokens == 456

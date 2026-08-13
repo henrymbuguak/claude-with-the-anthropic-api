@@ -35,6 +35,9 @@ class ChatResponse:
     output_tokens: int
     citations: list[Citation] = field(default_factory=list)
     web_search_requests: int = 0
+    thinking_text: str = ""
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
 
 
 class ClaudeChatClient:
@@ -55,14 +58,41 @@ class ClaudeChatClient:
             if self._settings.web_search_enabled
             else omit
         )
+        thinking = (
+            {
+                "type": "enabled",
+                "budget_tokens": self._settings.thinking_budget_tokens,
+                "display": "summarized",
+            }
+            if self._settings.thinking_enabled
+            else omit
+        )
+        # Extended thinking requires the API's default sampling temperature.
+        temperature = (
+            omit if self._settings.thinking_enabled else self._settings.temperature
+        )
+        # A cache_control breakpoint on the system prompt lets Claude reuse it
+        # across turns/requests instead of reprocessing it every time.
+        system = (
+            [
+                {
+                    "type": "text",
+                    "text": self._settings.system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
+            if self._settings.system_prompt and self._settings.prompt_cache_enabled
+            else self._settings.system_prompt or omit
+        )
         try:
             with self._client.messages.stream(
                 model=self._settings.model,
                 max_tokens=self._settings.max_tokens,
-                temperature=self._settings.temperature,
-                system=self._settings.system_prompt or omit,
+                temperature=temperature,
+                system=system,
                 messages=messages,
                 tools=tools,
+                thinking=thinking,
             ) as stream:
                 for text in stream.text_stream:
                     if on_chunk is not None:
@@ -82,7 +112,15 @@ class ClaudeChatClient:
 
         citations: list[Citation] = []
         seen_urls: set[str] = set()
+        thinking_parts: list[str] = []
         for block in final_message.content:
+            if block.type == "thinking":
+                if block.thinking:
+                    thinking_parts.append(block.thinking)
+                continue
+            if block.type == "redacted_thinking":
+                thinking_parts.append("[redacted reasoning]")
+                continue
             if block.type != "text":
                 continue
             for citation in block.citations or []:
@@ -108,5 +146,12 @@ class ClaudeChatClient:
             citations=citations,
             web_search_requests=(
                 server_tool_use.web_search_requests if server_tool_use else 0
+            ),
+            thinking_text="\n\n".join(thinking_parts),
+            cache_creation_input_tokens=(
+                final_message.usage.cache_creation_input_tokens or 0
+            ),
+            cache_read_input_tokens=(
+                final_message.usage.cache_read_input_tokens or 0
             ),
         )

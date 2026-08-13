@@ -15,6 +15,9 @@ class ConfigError(RuntimeError):
     """Raised when required configuration is missing or invalid."""
 
 
+MIN_THINKING_BUDGET_TOKENS = 1024
+
+
 @dataclass(frozen=True)
 class Settings:
     """Runtime settings for the chat CLI, sourced entirely from the environment."""
@@ -29,6 +32,9 @@ class Settings:
     web_search_enabled: bool
     web_search_max_uses: int
     web_search_allowed_domains: list[str] | None
+    thinking_enabled: bool
+    thinking_budget_tokens: int
+    prompt_cache_enabled: bool
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -85,6 +91,57 @@ class Settings:
             if domain.strip()
         ]
 
+        thinking_enabled_raw = os.getenv(
+            "ANTHROPIC_THINKING_ENABLED", "false").strip().lower()
+        if thinking_enabled_raw not in {"true", "false"}:
+            raise ConfigError(
+                "ANTHROPIC_THINKING_ENABLED must be 'true' or 'false', "
+                f"got {thinking_enabled_raw!r}"
+            )
+        thinking_enabled = thinking_enabled_raw == "true"
+
+        thinking_budget_tokens_raw = os.getenv(
+            "ANTHROPIC_THINKING_BUDGET_TOKENS", "10000")
+        try:
+            thinking_budget_tokens = int(thinking_budget_tokens_raw)
+        except ValueError as exc:
+            raise ConfigError(
+                "ANTHROPIC_THINKING_BUDGET_TOKENS must be an integer, "
+                f"got {thinking_budget_tokens_raw!r}"
+            ) from exc
+
+        if thinking_enabled:
+            if thinking_budget_tokens < MIN_THINKING_BUDGET_TOKENS:
+                raise ConfigError(
+                    "ANTHROPIC_THINKING_BUDGET_TOKENS must be at least "
+                    f"{MIN_THINKING_BUDGET_TOKENS} when extended thinking is "
+                    f"enabled, got {thinking_budget_tokens}"
+                )
+            if thinking_budget_tokens >= max_tokens:
+                raise ConfigError(
+                    "ANTHROPIC_MAX_TOKENS must be greater than "
+                    "ANTHROPIC_THINKING_BUDGET_TOKENS so there is room left "
+                    f"for the final response (max_tokens={max_tokens}, "
+                    f"thinking_budget_tokens={thinking_budget_tokens})"
+                )
+            if temperature != 1.0:
+                raise ConfigError(
+                    "ANTHROPIC_TEMPERATURE cannot be customized while "
+                    "extended thinking is enabled - Claude requires its "
+                    "default sampling temperature for thinking requests. "
+                    "Remove ANTHROPIC_TEMPERATURE or set "
+                    "ANTHROPIC_THINKING_ENABLED=false."
+                )
+
+        prompt_cache_enabled_raw = os.getenv(
+            "ANTHROPIC_PROMPT_CACHE_ENABLED", "false").strip().lower()
+        if prompt_cache_enabled_raw not in {"true", "false"}:
+            raise ConfigError(
+                "ANTHROPIC_PROMPT_CACHE_ENABLED must be 'true' or 'false', "
+                f"got {prompt_cache_enabled_raw!r}"
+            )
+        prompt_cache_enabled = prompt_cache_enabled_raw == "true"
+
         system_prompt = cls._load_system_prompt()
 
         return cls(
@@ -99,6 +156,9 @@ class Settings:
             web_search_enabled=web_search_enabled_raw == "true",
             web_search_max_uses=web_search_max_uses,
             web_search_allowed_domains=allowed_domains or None,
+            thinking_enabled=thinking_enabled,
+            thinking_budget_tokens=thinking_budget_tokens,
+            prompt_cache_enabled=prompt_cache_enabled,
         )
 
     @staticmethod

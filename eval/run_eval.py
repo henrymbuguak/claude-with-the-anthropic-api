@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from anthropic import Anthropic
+from anthropic import Anthropic, omit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -38,6 +38,7 @@ class CaseResult:
     id: str
     input: str
     response: str
+    thinking: str | None
     rule_checks_passed: bool
     rule_check_details: list[str]
     judge_active_voice: int | None
@@ -45,6 +46,8 @@ class CaseResult:
     judge_evidence_grounded: int | None
     judge_average: float | None
     judge_justification: str | None
+    cache_creation_input_tokens: int
+    cache_read_input_tokens: int
 
 
 def load_cases(path: Path) -> list[dict]:
@@ -62,17 +65,52 @@ def run(prompt_path: Path, cases_path: Path) -> list[CaseResult]:
     system_prompt = prompt_path.read_text(encoding="utf-8").strip()
     client = Anthropic(api_key=settings.api_key, max_retries=3)
 
+    # Extended thinking is configured once in Settings and shared by the CLI
+    # (app/claude_client.py) and this eval harness, so a prompt is always
+    # evaluated under the same thinking behavior it runs with in the chatbot.
+    thinking = (
+        {
+            "type": "enabled",
+            "budget_tokens": settings.thinking_budget_tokens,
+            "display": "summarized",
+        }
+        if settings.thinking_enabled
+        else omit
+    )
+    temperature = omit if settings.thinking_enabled else settings.temperature
+
+    # All cases share this exact system prompt, so once prompt caching is
+    # enabled the first case writes the cache and later cases in the same
+    # run can read from it.
+    system = (
+        [
+            {
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+        if settings.prompt_cache_enabled
+        else system_prompt
+    )
+
     results: list[CaseResult] = []
     for case in load_cases(cases_path):
         message = client.messages.create(
             model=settings.model,
             max_tokens=settings.max_tokens,
-            temperature=settings.temperature,
-            system=system_prompt,
+            temperature=temperature,
+            system=system,
             messages=[{"role": "user", "content": case["input"]}],
+            thinking=thinking,
         )
         response_text = "".join(
             block.text for block in message.content if block.type == "text")
+        thinking_text = "\n\n".join(
+            block.thinking
+            for block in message.content
+            if block.type == "thinking" and block.thinking
+        ) or None
 
         rule_result = run_rule_checks(response_text)
 
@@ -100,8 +138,11 @@ def run(prompt_path: Path, cases_path: Path) -> list[CaseResult]:
                 id=case["id"],
                 input=case["input"],
                 response=response_text,
+                thinking=thinking_text,
                 rule_checks_passed=rule_result.passed,
                 rule_check_details=rule_result.details,
+                cache_creation_input_tokens=message.usage.cache_creation_input_tokens or 0,
+                cache_read_input_tokens=message.usage.cache_read_input_tokens or 0,
                 **judge_fields,
             )
         )
@@ -111,6 +152,11 @@ def run(prompt_path: Path, cases_path: Path) -> list[CaseResult]:
 
 def print_summary(prompt_path: Path, results: list[CaseResult]) -> None:
     print(f"\nPrompt: {prompt_path}")
+    if any(r.thinking for r in results):
+        print("Extended thinking: enabled (reasoning saved in the JSON report)")
+    total_cache_read = sum(r.cache_read_input_tokens for r in results)
+    if total_cache_read:
+        print(f"Prompt cache: {total_cache_read} tokens read from cache")
     print(f"{'ID':<16} {'Rules':<7} {'Active':<7} {'Calm':<6} {'Evid.':<6} {'Avg':<6}")
     for r in results:
         rules = "PASS" if r.rule_checks_passed else "FAIL"

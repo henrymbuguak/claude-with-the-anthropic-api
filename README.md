@@ -12,7 +12,9 @@ tested modules rather than one monolithic script.
 **What this project demonstrates:**
 
 - A streaming, multi-turn chat client over the Anthropic Messages API, with
-  native web search, citation extraction, and unified error handling.
+  native web search, citation extraction, unified error handling, and
+  optional extended thinking whose token budget is validated against
+  `max_tokens` and shared with the prompt evaluation harness.
 - A hybrid RAG pipeline implemented from first principles: AST-aware code/doc
   chunking, Okapi BM25, Voyage AI embeddings with a local cosine-similarity
   vector index, and Reciprocal Rank Fusion to merge rankings from incompatible
@@ -260,29 +262,32 @@ uv export --no-hashes --no-dev -o requirements.txt
    Copy-Item .env.example .env
    ```
 
-   | Variable                               | Required | Default                     | Description                                              |
-   | -------------------------------------- | -------- | --------------------------- | -------------------------------------------------------- |
-   | `ANTHROPIC_API_KEY`                    | Yes      | —                           | Your Anthropic API key                                   |
-   | `VOYAGE_API_KEY`                       | For RAG  | —                           | Voyage key for semantic indexing and retrieval           |
-   | `RAG_CODE_EMBEDDING_MODEL`             | No       | `voyage-code-3`             | Voyage model used for code chunks                        |
-   | `RAG_PROSE_EMBEDDING_MODEL`            | No       | `voyage-4`                  | Voyage model used for prose chunks                       |
-   | `RAG_EMBEDDING_DIMENSION`              | No       | `1024`                      | Vector dimensions: 256, 512, 1024, or 2048               |
-   | `RAG_EMBEDDING_BATCH_SIZE`             | No       | `64`                        | Number of chunk texts per embedding request              |
-   | `RAG_INDEX_DIR`                        | No       | `.rag-index`                | Generated vector indexes and embedding cache             |
-   | `RAG_ENABLED`                          | No       | `false`                     | Turns the CLI chatbot into an end-to-end RAG chatbot     |
-   | `RAG_CHAT_MODE`                        | No       | `hybrid`                    | Retrieval mode for chat: `bm25`, `vector`, or `hybrid`   |
-   | `RAG_CHAT_TOP_K`                       | No       | `5`                         | Retrieved chunks used as grounding context per question  |
-   | `RAG_CONTEXT_CHAR_BUDGET`              | No       | `6000`                      | Character budget for grounding context sent to Claude    |
-   | `ANTHROPIC_MODEL`                      | No       | `claude-sonnet-4-6`         | Model used for chat completions                          |
-   | `ANTHROPIC_MAX_TOKENS`                 | No       | `500`                       | Max tokens generated per response                        |
-   | `ANTHROPIC_TEMPERATURE`                | No       | `1.0`                       | Sampling temperature                                     |
-   | `ANTHROPIC_WEB_SEARCH_ENABLED`         | No       | `false`                     | Enable Anthropic's native server-side web search         |
-   | `ANTHROPIC_WEB_SEARCH_MAX_USES`        | No       | `3`                         | Maximum web searches allowed in one API request          |
-   | `ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS` | No       | _(all)_                     | Optional comma-separated domain allowlist                |
-   | `ANTHROPIC_SYSTEM_PROMPT_FILE`         | No       | _(none)_                    | Path to a versioned system prompt file (see `prompts/`)  |
-   | `ANTHROPIC_SYSTEM_PROMPT`              | No       | _(none)_                    | Inline system prompt, used only if the file var is unset |
-   | `LOG_LEVEL`                            | No       | `INFO`                      | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`)  |
-   | `CONVERSATION_HISTORY_FILE`            | No       | `conversation_history.json` | Where the conversation is saved/resumed from             |
+   | Variable                               | Required | Default                     | Description                                                                      |
+   | -------------------------------------- | -------- | --------------------------- | -------------------------------------------------------------------------------- |
+   | `ANTHROPIC_API_KEY`                    | Yes      | —                           | Your Anthropic API key                                                           |
+   | `VOYAGE_API_KEY`                       | For RAG  | —                           | Voyage key for semantic indexing and retrieval                                   |
+   | `RAG_CODE_EMBEDDING_MODEL`             | No       | `voyage-code-3`             | Voyage model used for code chunks                                                |
+   | `RAG_PROSE_EMBEDDING_MODEL`            | No       | `voyage-4`                  | Voyage model used for prose chunks                                               |
+   | `RAG_EMBEDDING_DIMENSION`              | No       | `1024`                      | Vector dimensions: 256, 512, 1024, or 2048                                       |
+   | `RAG_EMBEDDING_BATCH_SIZE`             | No       | `64`                        | Number of chunk texts per embedding request                                      |
+   | `RAG_INDEX_DIR`                        | No       | `.rag-index`                | Generated vector indexes and embedding cache                                     |
+   | `RAG_ENABLED`                          | No       | `false`                     | Turns the CLI chatbot into an end-to-end RAG chatbot                             |
+   | `RAG_CHAT_MODE`                        | No       | `hybrid`                    | Retrieval mode for chat: `bm25`, `vector`, or `hybrid`                           |
+   | `RAG_CHAT_TOP_K`                       | No       | `5`                         | Retrieved chunks used as grounding context per question                          |
+   | `RAG_CONTEXT_CHAR_BUDGET`              | No       | `6000`                      | Character budget for grounding context sent to Claude                            |
+   | `ANTHROPIC_MODEL`                      | No       | `claude-sonnet-4-6`         | Model used for chat completions                                                  |
+   | `ANTHROPIC_MAX_TOKENS`                 | No       | `500`                       | Max tokens generated per response                                                |
+   | `ANTHROPIC_TEMPERATURE`                | No       | `1.0`                       | Sampling temperature                                                             |
+   | `ANTHROPIC_THINKING_ENABLED`           | No       | `false`                     | Enable Claude's extended thinking (shared with eval harness)                     |
+   | `ANTHROPIC_THINKING_BUDGET_TOKENS`     | No       | `10000`                     | Thinking token budget; must be `>= 1024` and `< ANTHROPIC_MAX_TOKENS`            |
+   | `ANTHROPIC_PROMPT_CACHE_ENABLED`       | No       | `false`                     | Cache the system prompt with Anthropic prompt caching (shared with eval harness) |
+   | `ANTHROPIC_WEB_SEARCH_ENABLED`         | No       | `false`                     | Enable Anthropic's native server-side web search                                 |
+   | `ANTHROPIC_WEB_SEARCH_MAX_USES`        | No       | `3`                         | Maximum web searches allowed in one API request                                  |
+   | `ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS` | No       | _(all)_                     | Optional comma-separated domain allowlist                                        |
+   | `ANTHROPIC_SYSTEM_PROMPT_FILE`         | No       | _(none)_                    | Path to a versioned system prompt file (see `prompts/`)                          |
+   | `ANTHROPIC_SYSTEM_PROMPT`              | No       | _(none)_                    | Inline system prompt, used only if the file var is unset                         |
+   | `LOG_LEVEL`                            | No       | `INFO`                      | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                          |
+   | `CONVERSATION_HISTORY_FILE`            | No       | `conversation_history.json` | Where the conversation is saved/resumed from                                     |
 
    > Never commit your real API key. `.env` is already excluded via `.gitignore`; only `.env.example` (no secrets) is tracked.
 
@@ -305,6 +310,60 @@ ANTHROPIC_WEB_SEARCH_ALLOWED_DOMAINS=who.int,cdc.gov
 ```
 
 Web search availability depends on the Anthropic account and model, and search requests may incur additional charges. Keep the feature disabled when it is not needed.
+
+## Extended Thinking
+
+Set `ANTHROPIC_THINKING_ENABLED=true` to let Claude reason step-by-step in
+dedicated `thinking` blocks before writing its final answer. `ANTHROPIC_THINKING_BUDGET_TOKENS`
+sets the token budget for that reasoning (Anthropic's minimum is 1,024).
+
+Thinking tokens count toward `ANTHROPIC_MAX_TOKENS`, so `Settings.from_env()`
+fails fast with a clear `ConfigError` if the budget would leave no room for a
+response:
+
+```dotenv
+ANTHROPIC_THINKING_ENABLED=true
+ANTHROPIC_THINKING_BUDGET_TOKENS=10000
+ANTHROPIC_MAX_TOKENS=16000   # must be greater than the thinking budget
+```
+
+Extended thinking also requires Claude's default sampling temperature, so
+configuration fails fast if `ANTHROPIC_TEMPERATURE` is set to anything other
+than `1.0` while thinking is enabled.
+
+This single `Settings`-driven configuration is shared by both call sites:
+
+- **`main.py`** — the CLI prints the reasoning as a `Thinking:` block after
+  the streamed answer. Like retrieved RAG context, it is shown but never
+  persisted to `conversation_history.json`.
+- **`eval/run_eval.py`** — the prompt evaluation harness (see below) requests
+  the same thinking configuration for every case, so a system prompt is
+  scored under the exact thinking behavior it runs with in the chatbot, and
+  each case's reasoning is saved in the JSON report for review.
+
+## Prompt Caching
+
+Set `ANTHROPIC_PROMPT_CACHE_ENABLED=true` to add a `cache_control: {"type":
+"ephemeral"}` breakpoint on the system prompt. Anthropic then caches that
+prompt for about 5 minutes; later requests that reuse it pay only a fraction
+of the normal input-token price instead of reprocessing it from scratch (the
+first request that writes the cache costs slightly more than normal).
+
+The cached content must reach the model's minimum cacheable length (1,024
+tokens for `claude-sonnet-4-6`) or caching is silently skipped — no error is
+raised, but no cost savings occur either. A short system prompt like
+`prompts/scientist_v1.txt` in this repo won't hit that threshold on its own;
+this setting matters most with longer, more detailed system prompts.
+
+This setting is shared by both call sites, same as extended thinking:
+
+- **`main.py`** — cache read/write token counts are logged at `DEBUG`
+  alongside other usage stats (`ChatResponse.cache_creation_input_tokens` /
+  `cache_read_input_tokens`).
+- **`eval/run_eval.py`** — every case in a run shares the same system prompt,
+  so once caching is enabled the first case writes the cache and later cases
+  in that run can read from it; `print_summary()` reports total tokens read
+  from cache when any were.
 
 ## Prompt Evaluation Workflow
 
@@ -332,12 +391,14 @@ uv run pytest -q
 uv run ruff check .
 ```
 
-97 tests cover every module: config validation, conversation persistence, the
-Anthropic client wrapper (streaming, citations, error translation), the full
-RAG pipeline (ingestion, BM25, RRF, embeddings, vector index, caching,
-retriever, context building), the CLI's RAG integration, and the eval
-harness's evaluators. The Anthropic and Voyage SDKs are mocked/injected
-throughout, so the suite runs with no real API calls or network access. CI
+122 tests cover every module: config validation (including extended thinking's
+budget/max_tokens/temperature constraints and prompt caching), conversation
+persistence, the Anthropic client wrapper (streaming, citations, extended
+thinking, prompt caching, error translation), the full RAG pipeline
+(ingestion, BM25, RRF, embeddings, vector index, caching, retriever, context
+building), the CLI's RAG integration, and the eval harness's evaluators. The
+Anthropic and Voyage SDKs are mocked/injected throughout, so the suite runs
+with no real API calls or network access. CI
 runs both commands on every push and pull request (see `.github/workflows/ci.yml`).
 
 ## Notes

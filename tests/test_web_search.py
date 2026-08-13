@@ -16,6 +16,9 @@ def make_settings(**overrides) -> Settings:
         "web_search_enabled": True,
         "web_search_max_uses": 3,
         "web_search_allowed_domains": None,
+        "thinking_enabled": False,
+        "thinking_budget_tokens": 10000,
+        "prompt_cache_enabled": False,
     }
     defaults.update(overrides)
     return Settings(**defaults)
