@@ -1,0 +1,6 @@
+{"id":"conversation-persistence","query":"How is conversation history loaded and saved between runs?","relevant_chunk_ids":["app/conversation.py#class-Conversation"]}
+{"id":"citation-deduplication","query":"Where are duplicate web search citations removed by URL?","relevant_chunk_ids":["app/claude_client.py#class-ClaudeChatClient"]}
+{"id":"web-search-configuration","query":"How are allowed domains and maximum uses configured for web search?","relevant_chunk_ids":["app/tools/web_search.py#function-build_web_search_tool"]}
+{"id":"system-prompt-file","query":"How is the versioned system prompt loaded from a file?","relevant_chunk_ids":["app/config.py#class-Settings"]}
+{"id":"untrusted-rag-context","query":"How does RAG treat retrieved source text as untrusted and avoid persisting it?","relevant_chunk_ids":["app/rag/context.py#function-build_augmented_message","app/rag/context.py#module-1"]}
+{"id":"hybrid-rank-fusion","query":"Where are BM25, code vectors, and prose vectors combined with reciprocal rank fusion?","relevant_chunk_ids":["app/rag/retriever.py#class-HybridRetriever"]}

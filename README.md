@@ -171,6 +171,26 @@ uv run pytest -q
 uv run ruff check app/rag tests/test_rag_ingest.py tests/test_rag_bm25.py tests/test_rag_rrf.py
 ```
 
+### Benchmark retrieval quality
+
+The labeled cases in `eval/rag_cases.jsonl` measure Hit@k, Recall@k, and mean
+reciprocal rank against stable chunk IDs. Run the deterministic BM25 baseline
+without API access:
+
+```powershell
+uv run python -m eval.rag_retrieval
+```
+
+After building vector indexes and setting `VOYAGE_API_KEY`, compare every mode
+on the same queries:
+
+```powershell
+uv run python -m eval.rag_retrieval --modes bm25 vector hybrid --top-k 5
+```
+
+The evaluator rejects stale labels when ingestion changes a chunk ID, so a
+benchmark cannot silently report misleading misses after corpus changes.
+
 Inspect the generated chunk IDs directly:
 
 ```powershell
