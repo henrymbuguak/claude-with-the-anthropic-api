@@ -95,6 +95,9 @@ venv.bak/
 # Runtime conversation history (per-user, not source)
 conversation_history.json
 
+# Generated local RAG vectors and embedding cache
+.rag-index/
+
 # Generated prompt eval reports (regenerable via eval/run_eval.py)
 eval/results/*.json
 !eval/results/.gitkeep

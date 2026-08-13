@@ -30,6 +30,130 @@ Unit tests cover `app/config.py`, `app/conversation.py`, `app/claude_client.py`,
 uv run pytest
 ```
 
+## RAG Learning Milestone
+
+The first local retrieval milestone lives in `app/rag/`. It deliberately stops
+before embeddings and generation so chunking and ranking behavior remain easy to
+inspect:
+
+- `ingest.py` chunks Python at top-level function/class boundaries and Markdown
+  at headings, while preserving source metadata for citations.
+- `index_bm25.py` implements Okapi BM25 and tokenizes complete code identifiers
+  plus their snake_case and camelCase components.
+- `rrf.py` implements Reciprocal Rank Fusion for combining independent rankings
+  without comparing incompatible retriever scores.
+- `embed_voyage.py` selects `voyage-code-3` for code and `voyage-4` for prose,
+  batches requests, and normalizes vectors for cosine similarity.
+- `index_vector.py` provides exact local vector search and keeps code/prose model
+  spaces separate before RRF merges their rankings.
+
+### Test the RAG milestone
+
+Run a BM25 retrieval experiment over this repository:
+
+```powershell
+uv run python -m app.rag.demo "allowed_domains max_uses WebSearchTool20260209Param"
+```
+
+The command prints each result's rank, BM25 score, stable chunk ID, and preview.
+Try natural-language questions and change the number of displayed results:
+
+```powershell
+uv run python -m app.rag.demo "How is conversation history saved?"
+uv run python -m app.rag.demo "Where are duplicate web citations removed?"
+uv run python -m app.rag.demo "How is the system prompt loaded from a file?" --top-k 10
+```
+
+Install the official Voyage client with uv and add your key only to `.env`:
+
+```powershell
+uv add voyageai
+uv run python -c "import voyageai; print('Voyage AI ready')"
+```
+
+```dotenv
+VOYAGE_API_KEY=your-real-voyage-key
+```
+
+Verify one small live API request, build cached code/prose indexes, and compare
+retrieval modes:
+
+```powershell
+uv run python -m app.rag.smoke_voyage
+uv run python -m app.rag.build_index
+uv run python -m app.rag.demo "How is conversation history saved?" --mode bm25
+uv run python -m app.rag.demo "How is conversation history saved?" --mode vector
+uv run python -m app.rag.demo "How is conversation history saved?" --mode hybrid
+```
+
+Use `--rebuild` only when you intentionally want to ignore cached embeddings:
+
+```powershell
+uv run python -m app.rag.build_index --rebuild
+```
+
+Generated indexes and the embedding cache live in `.rag-index/` and are excluded
+from git. Indexing uses `input_type="document"`; searches use
+`input_type="query"`. The application never prints or stores your Voyage key in
+the index.
+
+Run the focused RAG tests:
+
+```powershell
+uv run pytest tests/test_rag_ingest.py -v
+uv run pytest tests/test_rag_bm25.py -v
+uv run pytest tests/test_rag_rrf.py -v
+uv run pytest tests/test_rag_config.py tests/test_rag_embed_voyage.py -v
+uv run pytest tests/test_rag_index_vector.py tests/test_rag_embedding_cache.py -v
+uv run pytest tests/test_rag_build_index.py tests/test_rag_retriever.py -v
+```
+
+Run the complete project suite and lint the RAG implementation:
+
+```powershell
+uv run pytest -q
+uv run ruff check app/rag tests/test_rag_ingest.py tests/test_rag_bm25.py tests/test_rag_rrf.py
+```
+
+Inspect the generated chunk IDs directly:
+
+```powershell
+uv run python -c "from pathlib import Path; from app.rag.ingest import chunk_python; chunks = chunk_python(Path('app/claude_client.py'), Path.cwd()); print('\n'.join(chunk.chunk_id for chunk in chunks))"
+```
+
+This milestone exercises `files -> chunks -> BM25 + model-specific vectors ->
+RRF`. Code and prose vectors are never compared directly because they come from
+different embedding spaces.
+
+### End-to-end RAG chatbot
+
+Set `RAG_ENABLED=true` to make the CLI chatbot retrieve from this repository
+before answering. Each turn: the question is searched with `HybridRetriever`,
+the top chunks are formatted into a grounding block with citation and
+abstention instructions (`app/rag/context.py`), and only that single API call
+is augmented - `conversation_history.json` still stores just the plain
+question and Claude's answer, never the injected source text.
+
+```powershell
+# .env
+RAG_ENABLED=true
+RAG_CHAT_MODE=bm25      # or vector / hybrid (both require VOYAGE_API_KEY and built indexes)
+RAG_CHAT_TOP_K=5
+RAG_CONTEXT_CHAR_BUDGET=6000
+```
+
+For `vector` or `hybrid` chat modes, build the indexes first:
+
+```powershell
+uv run python -m app.rag.build_index
+uv run python main.py
+```
+
+Retrieved source text is treated as untrusted: the grounding instructions
+explicitly tell Claude to ignore any instructions embedded inside a source and
+to answer "insufficient information" when the retrieved chunks don't cover the
+question. Retrieved chunk ids are printed as `Local sources:` after each answer.
+
 ## Dependencies
 
 This project is managed with [uv](https://github.com/astral-sh/uv). Dependencies are declared in `pyproject.toml` and pinned in `uv.lock` (both committed for reproducible installs). A `requirements.txt` is also generated for anyone using plain `pip`:
@@ -63,6 +187,16 @@ uv export --no-hashes --no-dev -o requirements.txt
    | Variable                               | Required | Default                     | Description                                              |
    | -------------------------------------- | -------- | --------------------------- | -------------------------------------------------------- |
    | `ANTHROPIC_API_KEY`                    | Yes      | —                           | Your Anthropic API key                                   |
+   | `VOYAGE_API_KEY`                       | For RAG  | —                           | Voyage key for semantic indexing and retrieval           |
+   | `RAG_CODE_EMBEDDING_MODEL`             | No       | `voyage-code-3`             | Voyage model used for code chunks                        |
+   | `RAG_PROSE_EMBEDDING_MODEL`            | No       | `voyage-4`                  | Voyage model used for prose chunks                       |
+   | `RAG_EMBEDDING_DIMENSION`              | No       | `1024`                      | Vector dimensions: 256, 512, 1024, or 2048               |
+   | `RAG_EMBEDDING_BATCH_SIZE`             | No       | `64`                        | Number of chunk texts per embedding request              |
+   | `RAG_INDEX_DIR`                        | No       | `.rag-index`                | Generated vector indexes and embedding cache             |
+   | `RAG_ENABLED`                          | No       | `false`                     | Turns the CLI chatbot into an end-to-end RAG chatbot     |
+   | `RAG_CHAT_MODE`                        | No       | `hybrid`                    | Retrieval mode for chat: `bm25`, `vector`, or `hybrid`   |
+   | `RAG_CHAT_TOP_K`                       | No       | `5`                         | Retrieved chunks used as grounding context per question  |
+   | `RAG_CONTEXT_CHAR_BUDGET`              | No       | `6000`                      | Character budget for grounding context sent to Claude    |
    | `ANTHROPIC_MODEL`                      | No       | `claude-sonnet-4-6`         | Model used for chat completions                          |
    | `ANTHROPIC_MAX_TOKENS`                 | No       | `500`                       | Max tokens generated per response                        |
    | `ANTHROPIC_TEMPERATURE`                | No       | `1.0`                       | Sampling temperature                                     |
