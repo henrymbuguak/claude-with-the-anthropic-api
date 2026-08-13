@@ -10,7 +10,7 @@ aiosignal==1.4.0
     # via aiohttp
 annotated-types==0.8.0
     # via pydantic
-anthropic==0.120.2
+anthropic==0.121.0
     # via claude-with-the-anthropic-api
 anyio==4.14.2
     # via
@@ -24,7 +24,7 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
     #   requests
-charset-normalizer==3.4.9
+charset-normalizer==3.5.0
     # via requests
 click==8.4.2
     # via huggingface-hub
@@ -71,23 +71,23 @@ jsonpatch==1.33
     # via langchain-core
 jsonpointer==3.1.1
     # via jsonpatch
-langchain-core==1.5.3
+langchain-core==1.5.4
     # via langchain-text-splitters
 langchain-protocol==0.0.18
     # via langchain-core
 langchain-text-splitters==1.1.2
     # via voyageai
-langsmith==0.10.17
+langsmith==0.10.18
     # via langchain-core
 multidict==6.7.1
     # via
     #   aiohttp
     #   yarl
-numpy==2.5.1 ; python_full_version < '3.15'
+numpy==2.5.2 ; python_full_version < '3.15'
     # via voyageai
 orjson==3.11.9 ; platform_python_implementation != 'PyPy'
     # via langsmith
-packaging==26.2
+packaging==26.3
     # via
     #   huggingface-hub
     #   langchain-core
@@ -144,7 +144,7 @@ typing-extensions==4.16.0
     #   pydantic
     #   pydantic-core
     #   typing-inspection
-typing-inspection==0.4.2
+typing-inspection==0.4.4
     # via pydantic
 urllib3==2.7.0
     # via requests
@@ -156,7 +156,7 @@ voyageai==0.5.0
     # via claude-with-the-anthropic-api
 websockets==17.0.1
     # via langsmith
-xxhash==3.8.1
+xxhash==4.0.0
     # via langsmith
 yarl==1.24.5
     # via aiohttp
