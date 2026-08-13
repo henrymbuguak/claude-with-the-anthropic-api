@@ -1,40 +1,96 @@
-# Build with Anthropic API
+# Claude Chat CLI with Hybrid RAG Retrieval
 
-A small Python project for experimenting with the Anthropic (Claude) API, including multi-turn conversations and optional grounded web search.
+[![CI](https://github.com/henrymbuguak/claude-with-the-anthropic-api/actions/workflows/ci.yml/badge.svg)](https://github.com/henrymbuguak/claude-with-the-anthropic-api/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
 
-## What's Here
+A multi-turn Claude chat CLI, extended with a hybrid retrieval-augmented
+generation (RAG) system built from scratch — no `rank-bm25`, no FAISS.
+Retrieval, generation, and evaluation are separated into small, independently
+tested modules rather than one monolithic script.
 
-An interactive, multi-turn chat CLI for Claude, split into small, testable modules:
+**What this project demonstrates:**
 
-- **`app/config.py`** — Loads and validates all settings from environment variables (`.env`) into a `Settings` dataclass. Fails fast with a clear error if `ANTHROPIC_API_KEY` is missing or a numeric setting is malformed.
-- **`app/conversation.py`** — `Conversation` holds the message history (`add_user_message`/`add_assistant_message`) and can `save()`/`load()` it to/from JSON so a session can be resumed later.
-- **`app/claude_client.py`** — `ClaudeChatClient` wraps the Anthropic SDK: streams responses token-by-token, optionally enables native web search, extracts citations and usage, and translates SDK exceptions (`RateLimitError`, `APIConnectionError`, `APIStatusError`) into a single friendly `ChatClientError`.
-- **`app/tools/web_search.py`** — Builds the versioned Anthropic server-side web search definition from validated settings.
-- **`main.py`** — The CLI entry point. Loads settings, resumes any saved conversation, then runs an input loop until the user types `exit` (or presses Ctrl+C).
+- A streaming, multi-turn chat client over the Anthropic Messages API, with
+  native web search, citation extraction, and unified error handling.
+- A hybrid RAG pipeline implemented from first principles: AST-aware code/doc
+  chunking, Okapi BM25, Voyage AI embeddings with a local cosine-similarity
+  vector index, and Reciprocal Rank Fusion to merge rankings from incompatible
+  scoring spaces.
+- **End-to-end integration, not just a retrieval demo** — retrieved chunks are
+  formatted into a grounding prompt with citation and abstention instructions,
+  sent to Claude for a single turn, and never persisted to conversation
+  history, so the retrieval step can't leak untrusted source text into future
+  turns.
+- A prompt evaluation harness (rule-based checks + LLM-as-judge scoring) used
+  to A/B test system prompt revisions before adopting them.
+- 97 tests, `ruff`-clean, and CI running both on every push.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User] --> M[main.py]
+    M --> CV[(Conversation<br/>history JSON)]
+    M --> RET
+
+    subgraph RAG["Hybrid retrieval - opt-in via RAG_ENABLED"]
+        ING[ingest.py<br/>AST + heading chunking] --> RET[HybridRetriever]
+        RET --> BM25[BM25Index]
+        RET --> VEC[VectorIndex<br/>code + prose]
+        VEC --> VOY[VoyageEmbedder]
+        BM25 --> RRF[Reciprocal Rank Fusion]
+        VEC --> RRF
+        RRF --> CTX[context.py<br/>grounding + citation instructions]
+    end
+
+    CTX -.temporary, not persisted.-> CC[ClaudeChatClient]
+    M --> CC
+    CC -->|messages.stream| API[(Anthropic API)]
+```
+
+The retrieval path is opt-in and additive: with `RAG_ENABLED=false` (the
+default), `main.py` behaves exactly like a plain streaming chat client.
 
 ## Project Layout
 
 ```
-app/            # core library: config, conversation state, Claude API client
-main.py         # CLI entry point
-prompts/        # versioned system prompt files
-eval/           # prompt evaluation harness (cases, evaluators, runner, results)
-tests/          # unit tests (pytest)
+app/
+  config.py            # Settings dataclass, loaded/validated from .env
+  conversation.py       # Persisted multi-turn message history
+  claude_client.py      # Anthropic SDK wrapper: streaming, citations, error handling
+  tools/web_search.py   # Native Anthropic web search tool definition
+  rag/                  # Hybrid RAG retrieval + chat integration (see below)
+main.py                 # CLI entry point
+prompts/                # Versioned system prompt files
+eval/                   # Prompt evaluation harness (cases, evaluators, runner, results)
+tests/                  # pytest suite (unit tests for every module above)
+.github/workflows/      # CI: ruff + pytest on every push/PR
 ```
 
-## Testing
+## Example session
 
-Unit tests cover `app/config.py`, `app/conversation.py`, `app/claude_client.py`, and `eval/evaluators.py`, mocking the Anthropic SDK so no real API calls are made:
+```
+Type your question, or 'exit' to end the conversation.
 
-```powershell
-uv run pytest
+You: How is conversation history persisted between runs?
+Claude: Conversation history is stored as a list of {"role", "content"}
+dicts and saved to JSON after every turn [app/conversation.py#class-Conversation].
+Since the Anthropic API itself is stateless, the full message list is replayed
+on every request so Claude "remembers" prior turns.
+
+Local sources:
+[1] app/conversation.py#class-Conversation
+[2] main.py#function-run_chat_loop
 ```
 
-## RAG Learning Milestone
+(RAG mode: `RAG_ENABLED=true`. Without it, the CLI behaves like a plain
+streaming chat client with no local sources printed.)
 
-The first local retrieval milestone lives in `app/rag/`. It deliberately stops
-before embeddings and generation so chunking and ranking behavior remain easy to
-inspect:
+## Hybrid RAG retrieval
+
+The retrieval system lives in `app/rag/` and is composed of independently
+tested stages rather than a single opaque pipeline:
 
 - `ingest.py` chunks Python at top-level function/class boundaries and Markdown
   at headings, while preserving source metadata for citations.
@@ -47,7 +103,7 @@ inspect:
 - `index_vector.py` provides exact local vector search and keeps code/prose model
   spaces separate before RRF merges their rankings.
 
-### Test the RAG milestone
+### Try retrieval directly
 
 Run a BM25 retrieval experiment over this repository:
 
@@ -121,9 +177,9 @@ Inspect the generated chunk IDs directly:
 uv run python -c "from pathlib import Path; from app.rag.ingest import chunk_python; chunks = chunk_python(Path('app/claude_client.py'), Path.cwd()); print('\n'.join(chunk.chunk_id for chunk in chunks))"
 ```
 
-This milestone exercises `files -> chunks -> BM25 + model-specific vectors ->
-RRF`. Code and prose vectors are never compared directly because they come from
-different embedding spaces.
+This exercises `files -> chunks -> BM25 + model-specific vectors -> RRF`. Code
+and prose vectors are never compared directly because they come from different
+embedding spaces.
 
 ### End-to-end RAG chatbot
 
@@ -249,9 +305,28 @@ System prompts are versioned as plain text files in `prompts/` (e.g. `prompts/sc
 
 To adopt a new prompt version, point `ANTHROPIC_SYSTEM_PROMPT_FILE` in `.env` at the new file once its eval scores look good.
 
+## Testing
+
+```powershell
+uv run pytest -q
+uv run ruff check .
+```
+
+97 tests cover every module: config validation, conversation persistence, the
+Anthropic client wrapper (streaming, citations, error translation), the full
+RAG pipeline (ingestion, BM25, RRF, embeddings, vector index, caching,
+retriever, context building), the CLI's RAG integration, and the eval
+harness's evaluators. The Anthropic and Voyage SDKs are mocked/injected
+throughout, so the suite runs with no real API calls or network access. CI
+runs both commands on every push and pull request (see `.github/workflows/ci.yml`).
+
 ## Notes
 
 - Conversation history is kept as a list of `{"role": ..., "content": ...}` dicts, persisted to JSON, and replayed on each turn to `client.messages.create(...)`, which is how Claude "remembers" prior turns (the API itself is stateless).
 - Streaming uses `client.messages.stream(...)`; token and web-search usage are logged at `DEBUG` level for cost visibility.
 - API errors (rate limits, connection issues, non-2xx responses) surface as a single friendly `ChatClientError` instead of a raw SDK traceback, and the unanswered user turn is rolled back so the conversation stays consistent.
 - `.gitignore` covers Python caches, virtual environments (`.venv`), `.env` secrets, and the local `conversation_history.json`, while `pyproject.toml`, `uv.lock`, `requirements.txt`, and `.env.example` are tracked for reproducible, secret-free setup.
+
+## License
+
+[MIT](LICENSE)

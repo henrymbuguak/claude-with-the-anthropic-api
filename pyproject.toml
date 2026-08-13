@@ -19,7 +19,3 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-
-[[tool.uv.index]]
-url = "https://packagefeedproxy.microsoft.io/pypi/simple/"
-default = true
