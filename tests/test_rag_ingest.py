@@ -77,6 +77,10 @@ def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directori
     (tmp_path / "docs" / "guide.md").write_text(
         "# Documentation\nIgnore me.\n", encoding="utf-8"
     )
+    (tmp_path / "harness").mkdir()
+    (tmp_path / "harness" / "verify.py").write_text(
+        "def verify():\n    return True\n", encoding="utf-8"
+    )
 
     chunks = ingest_path(tmp_path)
 

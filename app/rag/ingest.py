@@ -20,6 +20,7 @@ _EXCLUDED_DIRECTORIES = {
     "build",
     "docs",
     "dist",
+    "harness",
 }
 _SUPPORTED_SUFFIXES = {".md", ".markdown", ".py"}
 

@@ -54,3 +54,8 @@ nav:
   - Home: index.md
   - Get started: getting-started.md
   - Architecture: architecture.md
+  - Guides:
+      - Implement Okapi BM25 from scratch: guides/guide-10.md
+  - Contributing:
+      - Write and review guides: contributing/writing-guides.md
+      - Tutorial template: contributing/tutorial-template.md

@@ -1,0 +1,56 @@
+name: Guide checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/guides.yml"
+      - "app/rag/ingest.py"
+      - "docs/contributing/**"
+      - "docs/guides/**"
+      - "harness/**"
+      - "mkdocs.yml"
+      - "tests/test_rag_ingest.py"
+      - "tests/test_verify_guides.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/guides.yml"
+      - "app/rag/ingest.py"
+      - "docs/contributing/**"
+      - "docs/guides/**"
+      - "harness/**"
+      - "mkdocs.yml"
+      - "tests/test_rag_ingest.py"
+      - "tests/test_verify_guides.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install locked dependencies
+        run: uv sync --locked
+
+      - name: Test documentation tooling
+        run: uv run pytest tests/test_rag_ingest.py tests/test_verify_guides.py -q
+
+      - name: Lint documentation tooling
+        run: uv run ruff check app/rag/ingest.py harness tests/test_rag_ingest.py tests/test_verify_guides.py
+
+      - name: Check guide annotation coverage
+        run: uv run python -m harness.verify_guides "docs/guides/*.md"
+
+      - name: Build documentation strictly
+        run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site
