@@ -14,6 +14,8 @@ _FENCE = re.compile(r"^\s*```([A-Za-z0-9_-]*)\s*$")
 _SHELL_LANGUAGES = {"bash", "console", "powershell", "pwsh", "sh", "shell"}
 _TIERS = {"offline", "keyed"}
 _MATCH_MODES = {"contains", "exact", "ordered"}
+_ORDERED_ITEM = re.compile(r"^\d+\.\s")
+_UNDER_INDENTED_CONTINUATION = re.compile(r"^ {1,3}\S")
 
 
 @dataclass(frozen=True)
@@ -90,10 +92,32 @@ def _validate_annotation(
     return issues
 
 
+def _lint_list_indentation(lines: list[str]) -> list[Issue]:
+    """Reject continuations that Python-Markdown splits from ordered lists."""
+    issues: list[Issue] = []
+    in_ordered_list = False
+    for line_number, line in enumerate(lines, 1):
+        if _ORDERED_ITEM.match(line):
+            in_ordered_list = True
+            continue
+        if not in_ordered_list or not line.strip():
+            continue
+        if _UNDER_INDENTED_CONTINUATION.match(line):
+            issues.append(
+                Issue(
+                    line_number,
+                    "ordered-list continuation must use at least four spaces",
+                )
+            )
+        elif not line.startswith(" "):
+            in_ordered_list = False
+    return issues
+
+
 def lint_guide(path: Path) -> Coverage:
     """Return verification coverage and annotation issues for one Markdown guide."""
     lines = path.read_text(encoding="utf-8").splitlines()
-    issues: list[Issue] = []
+    issues = _lint_list_indentation(lines)
     commands = 0
     verified = 0
     manual = 0

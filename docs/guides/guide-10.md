@@ -85,209 +85,209 @@ cp app/rag/index_bm25.py app/rag/index_bm25_reference.txt
 
 1. In `app/rag/index_bm25.py`, add the module imports and token patterns:
 
-   ```python
-   """A small BM25 index with tokenization for prose and source code."""
+    ```python
+    """A small BM25 index with tokenization for prose and source code."""
 
-   from __future__ import annotations
+    from __future__ import annotations
 
-   import math
-   import re
-   from collections import Counter
+    import math
+    import re
+    from collections import Counter
 
-   from app.rag.models import Chunk, SearchResult
+    from app.rag.models import Chunk, SearchResult
 
-   _TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9_]*|\d+(?:\.\d+)?")
-   _CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
-   ```
+    _TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9_]*|\d+(?:\.\d+)?")
+    _CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+    ```
 
 2. Add `tokenize()` after the patterns:
 
-   ```python
-   def tokenize(text: str) -> list[str]:
-       """Preserve identifiers while adding snake/camel-case components."""
-       tokens: list[str] = []
-       for match in _TOKEN.finditer(text):
-           raw = match.group(0)
-           tokens.append(raw.lower())
-           parts = [
-               part.lower()
-               for snake_part in raw.split("_")
-               for part in _CAMEL_BOUNDARY.split(snake_part)
-               if part
-           ]
-           if len(parts) > 1:
-               tokens.extend(parts)
-       return tokens
-   ```
+    ```python
+    def tokenize(text: str) -> list[str]:
+        """Preserve identifiers while adding snake/camel-case components."""
+        tokens: list[str] = []
+        for match in _TOKEN.finditer(text):
+            raw = match.group(0)
+            tokens.append(raw.lower())
+            parts = [
+                part.lower()
+                for snake_part in raw.split("_")
+                for part in _CAMEL_BOUNDARY.split(snake_part)
+                if part
+            ]
+            if len(parts) > 1:
+                tokens.extend(parts)
+        return tokens
+    ```
 
-   The tokenizer stores both `WebSearchTool20260209Param` and its components. An exact identifier query and a natural `web search` query can therefore reach the same chunk.
+    The tokenizer stores both `WebSearchTool20260209Param` and its components. An exact identifier query and a natural `web search` query can therefore reach the same chunk.
 
 3. Verify the split with a real identifier:
 
-   <!-- verify cmd tier=offline -->
+    <!-- verify cmd tier=offline -->
 
-   ```powershell
-   uv run python -c "from app.rag.index_bm25 import tokenize; print(tokenize('WebSearchTool20260209Param'))"
-   ```
+    ```powershell
+    uv run python -c "from app.rag.index_bm25 import tokenize; print(tokenize('WebSearchTool20260209Param'))"
+    ```
 
-   <!-- verify expect match=exact -->
+    <!-- verify expect match=exact -->
 
-   ```text
-   ['websearchtool20260209param', 'web', 'search', 'tool20260209', 'param']
-   ```
+    ```text
+    ['websearchtool20260209param', 'web', 'search', 'tool20260209', 'param']
+    ```
 
 ## Build the index
 
 1. Add the class and validate its parameters:
 
-   ```python
-   class BM25Index:
-       """An in-memory Okapi BM25 index over immutable chunks."""
+    ```python
+    class BM25Index:
+        """An in-memory Okapi BM25 index over immutable chunks."""
 
-       def __init__(
-           self,
-           chunks: list[Chunk],
-           *,
-           k1: float = 1.5,
-           b: float = 0.75,
-       ) -> None:
-           if k1 <= 0:
-               raise ValueError("k1 must be greater than zero")
-           if not 0 <= b <= 1:
-               raise ValueError("b must be between zero and one")
-   ```
+        def __init__(
+            self,
+            chunks: list[Chunk],
+            *,
+            k1: float = 1.5,
+            b: float = 0.75,
+        ) -> None:
+            if k1 <= 0:
+                raise ValueError("k1 must be greater than zero")
+            if not 0 <= b <= 1:
+                raise ValueError("b must be between zero and one")
+    ```
 
 2. In `__init__`, store the chunks and parameters:
 
-   ```python
-           self._chunks = list(chunks)
-           self._k1 = k1
-           self._b = b
-   ```
+    ```python
+            self._chunks = list(chunks)
+            self._k1 = k1
+            self._b = b
+    ```
 
 3. Still in `__init__`, precompute term counts and document lengths:
 
-   ```python
-           self._term_frequencies = [
-               Counter(tokenize(chunk.text)) for chunk in chunks
-           ]
-           self._document_lengths = [
-               sum(counts.values()) for counts in self._term_frequencies
-           ]
-           self._average_document_length = (
-               sum(self._document_lengths) / len(self._document_lengths)
-               if self._document_lengths
-               else 0.0
-           )
-   ```
+    ```python
+            self._term_frequencies = [
+                Counter(tokenize(chunk.text)) for chunk in chunks
+            ]
+            self._document_lengths = [
+                sum(counts.values()) for counts in self._term_frequencies
+            ]
+            self._average_document_length = (
+                sum(self._document_lengths) / len(self._document_lengths)
+                if self._document_lengths
+                else 0.0
+            )
+    ```
 
 4. Count each term once per document when calculating document frequency:
 
-   ```python
-           self._document_frequencies = Counter(
-               term for counts in self._term_frequencies for term in counts
-           )
-   ```
+    ```python
+            self._document_frequencies = Counter(
+                term for counts in self._term_frequencies for term in counts
+            )
+    ```
 
-   Iterating over a `Counter` yields its keys. A term that appears ten times in one chunk therefore contributes one document to document frequency, not ten.
+    Iterating over a `Counter` yields its keys. A term that appears ten times in one chunk therefore contributes one document to document frequency, not ten.
 
 ## Score one term
 
 1. Add `_term_score()` and return early when the chunk does not contain the term:
 
-   ```python
-       def _term_score(
-           self,
-           term: str,
-           frequencies: Counter[str],
-           document_length: int,
-       ) -> float:
-           term_frequency = frequencies.get(term, 0)
-           if not term_frequency:
-               return 0.0
-   ```
+    ```python
+        def _term_score(
+            self,
+            term: str,
+            frequencies: Counter[str],
+            document_length: int,
+        ) -> float:
+            term_frequency = frequencies.get(term, 0)
+            if not term_frequency:
+                return 0.0
+    ```
 
 2. Calculate inverse document frequency:
 
-   ```python
-           document_count = len(self._chunks)
-           document_frequency = self._document_frequencies[term]
-           inverse_document_frequency = math.log(
-               1
-               + (document_count - document_frequency + 0.5)
-               / (document_frequency + 0.5)
-           )
-   ```
+    ```python
+            document_count = len(self._chunks)
+            document_frequency = self._document_frequencies[term]
+            inverse_document_frequency = math.log(
+                1
+                + (document_count - document_frequency + 0.5)
+                / (document_frequency + 0.5)
+            )
+    ```
 
 3. Add saturation and length normalization, then return the term score:
 
-   ```python
-           length_ratio = document_length / self._average_document_length
-           denominator = term_frequency + self._k1 * (
-               1 - self._b + self._b * length_ratio
-           )
-           return inverse_document_frequency * (
-               term_frequency * (self._k1 + 1) / denominator
-           )
-   ```
+    ```python
+            length_ratio = document_length / self._average_document_length
+            denominator = term_frequency + self._k1 * (
+                1 - self._b + self._b * length_ratio
+            )
+            return inverse_document_frequency * (
+                term_frequency * (self._k1 + 1) / denominator
+            )
+    ```
 
 ## Rank the chunks
 
 1. Add `search()` with guards for invalid result counts and an empty corpus:
 
-   ```python
-       def search(self, query: str, top_k: int = 5) -> list[SearchResult]:
-           """Return positive-scoring chunks ordered by BM25 relevance."""
-           if top_k < 1:
-               raise ValueError("top_k must be greater than zero")
-           if not self._chunks:
-               return []
-   ```
+    ```python
+        def search(self, query: str, top_k: int = 5) -> list[SearchResult]:
+            """Return positive-scoring chunks ordered by BM25 relevance."""
+            if top_k < 1:
+                raise ValueError("top_k must be greater than zero")
+            if not self._chunks:
+                return []
+    ```
 
 2. Tokenize the query and score every chunk:
 
-   ```python
-           query_terms = set(tokenize(query))
-           scored: list[tuple[float, Chunk]] = []
-           for chunk, frequencies, document_length in zip(
-               self._chunks,
-               self._term_frequencies,
-               self._document_lengths,
-               strict=True,
-           ):
-               score = sum(
-                   self._term_score(term, frequencies, document_length)
-                   for term in query_terms
-               )
-               if score > 0:
-                   scored.append((score, chunk))
-   ```
+    ```python
+            query_terms = set(tokenize(query))
+            scored: list[tuple[float, Chunk]] = []
+            for chunk, frequencies, document_length in zip(
+                self._chunks,
+                self._term_frequencies,
+                self._document_lengths,
+                strict=True,
+            ):
+                score = sum(
+                    self._term_score(term, frequencies, document_length)
+                    for term in query_terms
+                )
+                if score > 0:
+                    scored.append((score, chunk))
+    ```
 
 3. Sort by descending score and use the chunk ID as a deterministic tie-breaker:
 
-   ```python
-           scored.sort(key=lambda item: (-item[0], item[1].chunk_id))
-           return [
-               SearchResult(chunk=chunk, score=score, rank=rank)
-               for rank, (score, chunk) in enumerate(
-                   scored[:top_k], start=1
-               )
-           ]
-   ```
+    ```python
+            scored.sort(key=lambda item: (-item[0], item[1].chunk_id))
+            return [
+                SearchResult(chunk=chunk, score=score, rank=rank)
+                for rank, (score, chunk) in enumerate(
+                    scored[:top_k], start=1
+                )
+            ]
+    ```
 
 4. Confirm that the complete module imports:
 
-   <!-- verify cmd tier=offline -->
+    <!-- verify cmd tier=offline -->
 
-   ```powershell
-   uv run python -c "from app.rag.index_bm25 import BM25Index; print('ok')"
-   ```
+    ```powershell
+    uv run python -c "from app.rag.index_bm25 import BM25Index; print('ok')"
+    ```
 
-   <!-- verify expect match=exact -->
+    <!-- verify expect match=exact -->
 
-   ```text
-   ok
-   ```
+    ```text
+    ok
+    ```
 
 ## Verify your work
 

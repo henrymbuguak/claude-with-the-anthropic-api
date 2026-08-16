@@ -95,3 +95,20 @@ def test_lint_rejects_guide_without_commands(tmp_path: Path) -> None:
 
     assert coverage.commands == 0
     assert coverage.issues[0].message == "guide has no shell command blocks"
+
+
+def test_lint_rejects_three_space_ordered_list_continuation(tmp_path: Path) -> None:
+    coverage = _lint(
+        tmp_path,
+        """1. Run the check.
+
+   ```bash
+   uv run pytest -q
+   ```
+""",
+    )
+
+    assert any(
+        issue.message == "ordered-list continuation must use at least four spaces"
+        for issue in coverage.issues
+    )

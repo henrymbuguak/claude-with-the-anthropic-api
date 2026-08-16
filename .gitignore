@@ -113,9 +113,6 @@ eval/results/*.json
 /site
 
 
-# vscode
-.vscode/
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -131,7 +128,7 @@ dmypy.json
 cython_debug/
 
 # VS Code
-.vscode/
+.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json

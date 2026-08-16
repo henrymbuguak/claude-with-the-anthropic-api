@@ -55,6 +55,7 @@ Use task-oriented titles such as “Implement Okapi BM25 from scratch,” not to
 - Put the file or location before the action.
 - Keep one action in each numbered step.
 - Explain the expected result immediately after the action.
+- Indent continuations of numbered items with four spaces. Three spaces split the procedure into separate lists in MkDocs.
 - Avoid “easy,” “simply,” “just,” “obviously,” and directional phrases such as “below.”
 - Use repository-relative paths in prose and output.
 - Show PowerShell and Bash when commands differ.

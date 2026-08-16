@@ -2,7 +2,7 @@
 
 Copy this structure when starting a numbered guide. Remove sections that genuinely do not apply, but keep the learning sequence intact.
 
-````markdown
+````text
 # Build a specific outcome
 
 ## What you'll build
@@ -33,23 +33,9 @@ Explain no more than the concepts required for the procedure.
 
 ## Build the feature
 
-1. In `path/to/file.py`, add the smallest complete code unit.
-
-   Explain the result of this step.
-
-2. Run a focused checkpoint.
-
-   <!-- verify cmd tier=offline -->
-
-   ```powershell
-   uv run pytest tests/test_feature.py -q
-   ```
-
-   <!-- verify expect match=contains -->
-
-   ```text
-   passed
-   ```
+Add numbered steps. Indent every paragraph, annotation, and code block that
+continues a numbered item with four spaces. The guide linter rejects three-space
+continuations because MkDocs renders them as separate lists.
 
 ## Verify your work
 
