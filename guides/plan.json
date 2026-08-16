@@ -48,7 +48,7 @@
                 "corpus.chunk_count"
             ],
             "id": 20,
-            "output": "docs/guides/guide-20.md",
+            "output": "docs/guides/benchmark-retrieval-quality.md",
             "prerequisites": [
                 10
             ],

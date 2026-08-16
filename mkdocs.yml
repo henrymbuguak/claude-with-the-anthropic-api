@@ -56,7 +56,7 @@ nav:
   - Architecture: architecture.md
   - Guides:
       - Implement Okapi BM25 from scratch: guides/guide-10.md
-      - Benchmark retrieval quality: guides/guide-20.md
+      - Benchmark retrieval quality: guides/benchmark-retrieval-quality.md
   - Contributing:
       - Write and review guides: contributing/writing-guides.md
       - Tutorial template: contributing/tutorial-template.md
