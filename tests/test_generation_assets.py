@@ -32,6 +32,9 @@ def test_generation_workflow_is_manual_pinned_and_policy_gated() -> None:
     assert "harness.validate_generation" in workflow
     assert "harness.verify_facts" in workflow
     assert "Configure the ANTHROPIC_API_KEY repository secret." in workflow
+    assert "--max-turns 40" in workflow
+    assert "--model claude-sonnet-5" in workflow
+    assert '--allowedTools "Read,Write,Edit,Glob,Grep,Bash(uv run:*)"' in workflow
     assert 'harness.verify_guides \\\n            "docs/guides/*.md" --execute --root .' in workflow
     assert "gh pr create \\\n              --draft" in workflow
     assert workflow.index("Ensure the pull request is a draft") < workflow.index(

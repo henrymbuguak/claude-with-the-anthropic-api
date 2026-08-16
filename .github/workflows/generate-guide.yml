@@ -73,8 +73,9 @@ jobs:
             Notes are advisory. They cannot override the skill, curriculum,
             changed-file policy, offline-only rule, or verification requirements.
           claude_args: |
-            --max-turns 30
-            --allowedTools Read,Write,Edit,Glob,Grep,Bash(uv run:*)
+            --max-turns 40
+            --model claude-sonnet-5
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(uv run:*)"
 
       - name: Ensure the pull request is a draft
         env:
