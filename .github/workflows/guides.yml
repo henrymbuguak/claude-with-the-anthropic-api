@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - ".claude/skills/write-guide/**"
+      - ".github/workflows/generate-guide.yml"
       - ".github/workflows/guides.yml"
       - "app/rag/ingest.py"
       - "docs/contributing/**"
@@ -15,11 +17,15 @@ on:
       - "mkdocs.yml"
       - "tests/test_rag_ingest.py"
       - "tests/test_measure_facts.py"
+      - "tests/test_prepare_generation.py"
+      - "tests/test_validate_generation.py"
       - "tests/test_verify_facts.py"
       - "tests/test_verify_guides.py"
   pull_request:
     branches: [main]
     paths:
+      - ".claude/skills/write-guide/**"
+      - ".github/workflows/generate-guide.yml"
       - ".github/workflows/guides.yml"
       - "app/rag/ingest.py"
       - "docs/contributing/**"
@@ -31,6 +37,8 @@ on:
       - "mkdocs.yml"
       - "tests/test_rag_ingest.py"
       - "tests/test_measure_facts.py"
+      - "tests/test_prepare_generation.py"
+      - "tests/test_validate_generation.py"
       - "tests/test_verify_facts.py"
       - "tests/test_verify_guides.py"
   workflow_dispatch:
@@ -58,6 +66,8 @@ jobs:
           uv run pytest \
             tests/test_rag_ingest.py \
             tests/test_measure_facts.py \
+            tests/test_prepare_generation.py \
+            tests/test_validate_generation.py \
             tests/test_verify_facts.py \
             tests/test_verify_guides.py \
             -q
@@ -69,6 +79,8 @@ jobs:
             harness \
             tests/test_rag_ingest.py \
             tests/test_measure_facts.py \
+            tests/test_prepare_generation.py \
+            tests/test_validate_generation.py \
             tests/test_verify_facts.py \
             tests/test_verify_guides.py
 

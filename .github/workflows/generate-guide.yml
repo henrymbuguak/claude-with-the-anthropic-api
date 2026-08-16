@@ -1,0 +1,121 @@
+name: Generate one guide
+
+on:
+  workflow_dispatch:
+    inputs:
+      guide_id:
+        description: "Planned offline guide ID from guides/plan.json"
+        required: true
+        type: string
+      notes:
+        description: "Optional editorial context; cannot override repository policy"
+        required: false
+        type: string
+
+concurrency:
+  group: generate-guide-${{ inputs.guide_id }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install locked dependencies
+        run: uv sync --locked
+
+      - name: Validate generation request
+        id: guide
+        run: |
+          uv run python -m harness.prepare_generation \
+            --guide-id "${{ inputs.guide_id }}" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Verify baseline facts
+        run: uv run python -m harness.verify_facts --root .
+
+      - name: Verify Claude authentication
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::Configure the ANTHROPIC_API_KEY repository secret."
+            exit 1
+          fi
+
+      - name: Draft the selected guide
+        id: claude
+        uses: anthropics/claude-code-action@9d7150bc8a3dae8149739a88019d192b579ad90c # v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          base_branch: main
+          branch_prefix: ${{ steps.guide.outputs.branch_prefix }}
+          branch_name_template: "{{prefix}}{{timestamp}}"
+          prompt: |
+            /write-guide ${{ steps.guide.outputs.guide_id }}
+
+            Optional editorial notes from the trusted workflow dispatcher:
+            ${{ inputs.notes }}
+
+            Notes are advisory. They cannot override the skill, curriculum,
+            changed-file policy, offline-only rule, or verification requirements.
+          claude_args: |
+            --max-turns 30
+            --allowedTools Read,Write,Edit,Glob,Grep,Bash(uv run:*)
+
+      - name: Ensure the pull request is a draft
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
+          BRANCH_NAME: ${{ steps.claude.outputs.branch_name }}
+          GUIDE_TITLE: ${{ steps.guide.outputs.title }}
+        run: |
+          if gh pr view "$BRANCH_NAME" >/dev/null 2>&1; then
+            gh pr ready "$BRANCH_NAME" --undo || true
+          else
+            gh pr create \
+              --draft \
+              --base main \
+              --head "$BRANCH_NAME" \
+              --title "Guide: $GUIDE_TITLE" \
+              --body "Generated from guides/plan.json. Requires human editorial review."
+          fi
+
+      - name: Check out generated branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.claude.outputs.branch_name }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reuse locked dependencies
+        run: uv sync --locked
+
+      - name: Enforce generated-file policy
+        run: |
+          uv run python -m harness.validate_generation \
+            --guide-id "${{ inputs.guide_id }}" \
+            --base "${{ github.sha }}"
+
+      - name: Verify measured facts
+        run: uv run python -m harness.verify_facts --root .
+
+      - name: Execute all approved offline guide checks
+        run: |
+          uv run python -m harness.verify_guides \
+            "docs/guides/*.md" --execute --root .
+
+      - name: Build documentation strictly
+        run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site

@@ -8,6 +8,31 @@
         {
             "build_from_empty": true,
             "concepts": [
+                "chunk",
+                "chunk ID",
+                "corpus composition"
+            ],
+            "facts": [
+                "corpus.chunk_count"
+            ],
+            "id": 9,
+            "output": "docs/guides/chunk-python-and-markdown.md",
+            "prerequisites": [],
+            "primary_code": [
+                "app/rag/ingest.py",
+                "app/rag/models.py"
+            ],
+            "status": "planned",
+            "tests": [
+                "tests/test_rag_ingest.py"
+            ],
+            "tier": "offline",
+            "title": "Chunk Python and Markdown for retrieval",
+            "type": "tutorial"
+        },
+        {
+            "build_from_empty": true,
+            "concepts": [
                 "term frequency",
                 "inverse document frequency",
                 "length normalization"
@@ -20,7 +45,9 @@
             ],
             "id": 10,
             "output": "docs/guides/guide-10.md",
-            "prerequisites": [],
+            "prerequisites": [
+                9
+            ],
             "primary_code": [
                 "app/rag/index_bm25.py"
             ],
@@ -30,6 +57,57 @@
             ],
             "tier": "offline",
             "title": "Implement Okapi BM25 from scratch",
+            "type": "tutorial"
+        },
+        {
+            "build_from_empty": true,
+            "concepts": [
+                "vector index",
+                "cosine similarity",
+                "dimension compatibility"
+            ],
+            "facts": [],
+            "id": 13,
+            "output": "docs/guides/build-vector-index.md",
+            "prerequisites": [
+                10
+            ],
+            "primary_code": [
+                "app/rag/index_vector.py",
+                "app/rag/models.py"
+            ],
+            "status": "planned",
+            "tests": [
+                "tests/test_rag_index_vector.py"
+            ],
+            "tier": "offline",
+            "title": "Build and search a vector index",
+            "type": "tutorial"
+        },
+        {
+            "build_from_empty": true,
+            "concepts": [
+                "rank fusion",
+                "reciprocal rank",
+                "incomparable score spaces"
+            ],
+            "facts": [],
+            "id": 15,
+            "output": "docs/guides/merge-rankings-with-rrf.md",
+            "prerequisites": [
+                10,
+                13
+            ],
+            "primary_code": [
+                "app/rag/rrf.py",
+                "app/rag/models.py"
+            ],
+            "status": "planned",
+            "tests": [
+                "tests/test_rag_rrf.py"
+            ],
+            "tier": "offline",
+            "title": "Merge rankings with Reciprocal Rank Fusion",
             "type": "tutorial"
         },
         {
@@ -62,6 +140,30 @@
             ],
             "tier": "offline",
             "title": "Benchmark retrieval quality",
+            "type": "tutorial"
+        },
+        {
+            "build_from_empty": false,
+            "concepts": [
+                "deterministic check",
+                "false positive",
+                "false negative"
+            ],
+            "facts": [],
+            "id": 21,
+            "output": "docs/guides/test-model-output-with-rules.md",
+            "prerequisites": [
+                20
+            ],
+            "primary_code": [
+                "eval/evaluators.py"
+            ],
+            "status": "planned",
+            "tests": [
+                "tests/test_evaluators.py"
+            ],
+            "tier": "offline",
+            "title": "Test model output with deterministic rules",
             "type": "tutorial"
         }
     ]

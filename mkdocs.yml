@@ -60,3 +60,4 @@ nav:
   - Contributing:
       - Write and review guides: contributing/writing-guides.md
       - Tutorial template: contributing/tutorial-template.md
+      - Generate one guide: contributing/generate-guides.md

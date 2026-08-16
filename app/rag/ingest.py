@@ -10,6 +10,7 @@ from app.rag.models import Chunk
 
 _MARKDOWN_HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 _EXCLUDED_DIRECTORIES = {
+    ".claude",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
@@ -23,7 +24,10 @@ _EXCLUDED_DIRECTORIES = {
     "harness",
 }
 _EXCLUDED_FILES = {
+    "test_generation_assets.py",
     "test_measure_facts.py",
+    "test_prepare_generation.py",
+    "test_validate_generation.py",
     "test_verify_facts.py",
     "test_verify_guides.py",
 }

@@ -73,6 +73,10 @@ def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directori
     (tmp_path / "notes.txt").write_text("Ignore me.", encoding="utf-8")
     (tmp_path / ".venv").mkdir()
     (tmp_path / ".venv" / "ignored.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "SKILL.md").write_text(
+        "# Authoring skill\nIgnore me.\n", encoding="utf-8"
+    )
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "guide.md").write_text(
         "# Documentation\nIgnore me.\n", encoding="utf-8"
@@ -82,11 +86,20 @@ def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directori
         "def verify():\n    return True\n", encoding="utf-8"
     )
     (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_generation_assets.py").write_text(
+        "def test_generation_assets():\n    assert True\n", encoding="utf-8"
+    )
     (tmp_path / "tests" / "test_verify_guides.py").write_text(
         "def test_linter():\n    assert True\n", encoding="utf-8"
     )
     (tmp_path / "tests" / "test_measure_facts.py").write_text(
         "def test_ledger():\n    assert True\n", encoding="utf-8"
+    )
+    (tmp_path / "tests" / "test_prepare_generation.py").write_text(
+        "def test_generation_preflight():\n    assert True\n", encoding="utf-8"
+    )
+    (tmp_path / "tests" / "test_validate_generation.py").write_text(
+        "def test_generation_policy():\n    assert True\n", encoding="utf-8"
     )
     (tmp_path / "tests" / "test_verify_facts.py").write_text(
         "def test_fact_references():\n    assert True\n", encoding="utf-8"
