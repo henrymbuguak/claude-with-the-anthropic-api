@@ -62,7 +62,7 @@ def test_chunk_file_rejects_unsupported_files(tmp_path: Path) -> None:
         chunk_file(path)
 
 
-def test_ingest_path_discovers_supported_files_and_excludes_virtualenv(
+def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directories(
     tmp_path: Path,
 ) -> None:
     (tmp_path / "app").mkdir()
@@ -73,6 +73,10 @@ def test_ingest_path_discovers_supported_files_and_excludes_virtualenv(
     (tmp_path / "notes.txt").write_text("Ignore me.", encoding="utf-8")
     (tmp_path / ".venv").mkdir()
     (tmp_path / ".venv" / "ignored.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "guide.md").write_text(
+        "# Documentation\nIgnore me.\n", encoding="utf-8"
+    )
 
     chunks = ingest_path(tmp_path)
 

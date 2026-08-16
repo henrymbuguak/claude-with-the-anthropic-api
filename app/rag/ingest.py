@@ -18,6 +18,7 @@ _EXCLUDED_DIRECTORIES = {
     ".venv",
     "__pycache__",
     "build",
+    "docs",
     "dist",
 }
 _SUPPORTED_SUFFIXES = {".md", ".markdown", ".py"}

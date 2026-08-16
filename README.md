@@ -1,6 +1,7 @@
 # Claude Chat CLI with Hybrid RAG Retrieval
 
 [![CI](https://github.com/henrymbuguak/claude-with-the-anthropic-api/actions/workflows/ci.yml/badge.svg)](https://github.com/henrymbuguak/claude-with-the-anthropic-api/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-00897b)](https://henrymbuguak.github.io/claude-with-the-anthropic-api/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
 
@@ -8,6 +9,9 @@ A multi-turn Claude chat CLI, extended with a hybrid retrieval-augmented
 generation (RAG) system built from scratch — no `rank-bm25`, no FAISS.
 Retrieval, generation, and evaluation are separated into small, independently
 tested modules rather than one monolithic script.
+
+[Read the project documentation](https://henrymbuguak.github.io/claude-with-the-anthropic-api/)
+for setup instructions and an architecture walkthrough.
 
 **What this project demonstrates:**
 
@@ -26,7 +30,7 @@ tested modules rather than one monolithic script.
   turns.
 - A prompt evaluation harness (rule-based checks + LLM-as-judge scoring) used
   to A/B test system prompt revisions before adopting them.
-- 97 tests, `ruff`-clean, and CI running both on every push.
+- 122 tests, `ruff`-clean, and CI running both on every push.
 
 ## CLI Demo
 
