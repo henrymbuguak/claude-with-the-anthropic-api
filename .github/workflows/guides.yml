@@ -49,8 +49,8 @@ jobs:
       - name: Lint documentation tooling
         run: uv run ruff check app/rag/ingest.py harness tests/test_rag_ingest.py tests/test_verify_guides.py
 
-      - name: Check guide annotation coverage
-        run: uv run python -m harness.verify_guides "docs/guides/*.md"
+      - name: Verify approved offline guide commands
+        run: uv run python -m harness.verify_guides "docs/guides/*.md" --execute --root .
 
       - name: Build documentation strictly
         run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site

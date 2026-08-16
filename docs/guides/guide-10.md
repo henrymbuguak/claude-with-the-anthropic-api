@@ -30,7 +30,7 @@ uv run python -m app.rag.demo "allowed_domains max_uses WebSearchTool20260209Par
 <!-- verify expect match=ordered ignore_decimals=true -->
 
 ```text
-Indexed 275 chunks
+Indexed 267 chunks
 1. app/tools/web_search.py#function-build_web_search_tool (bm25 55.306)
 2. tests/test_claude_client.py#function-test_stream_message_enables_configured_web_search (bm25 29.813)
 3. app/tools/web_search.py#module-1 (bm25 25.372)
@@ -365,5 +365,5 @@ For the ranking model's derivation, read [The Probabilistic Relevance Framework:
 | -------- | ---------------------------------------------- |
 | Python   | 3.13.14; the repository requires 3.12 or later |
 | pytest   | 9.1.1                                          |
-| Corpus   | 275 chunks, excluding `docs/` and `harness/`   |
-| Verified | 2026-08-16                                     |
+| Corpus   | 267 chunks, excluding guide documentation and tooling |
+| Verified | 2026-08-17                                     |

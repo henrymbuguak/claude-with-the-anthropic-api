@@ -72,5 +72,5 @@ Link the next guide and primary external documentation.
 Run the annotation linter before requesting review:
 
 ```powershell
-python -m harness.verify_guides "docs/guides/*.md"
+python -m harness.verify_guides "docs/guides/*.md" --execute --root .
 ```

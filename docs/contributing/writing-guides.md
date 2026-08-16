@@ -121,7 +121,7 @@ Confirm that:
 - Commands work from the repository root.
 - Expected output excludes absolute paths, timing, and temporary names.
 - Internal links resolve and the page appears in `mkdocs.yml`.
-- `python -m harness.verify_guides "docs/guides/*.md"` passes.
+- `python -m harness.verify_guides "docs/guides/*.md" --execute --root .` passes.
 - `mkdocs build --strict` passes in CI.
 
 Machine verification establishes factual consistency. A human reviewer still decides whether the guide teaches clearly.

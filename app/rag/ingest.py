@@ -22,6 +22,7 @@ _EXCLUDED_DIRECTORIES = {
     "dist",
     "harness",
 }
+_EXCLUDED_FILES = {"test_verify_guides.py"}
 _SUPPORTED_SUFFIXES = {".md", ".markdown", ".py"}
 
 
@@ -171,6 +172,8 @@ def ingest_path(root: Path) -> list[Chunk]:
         "*"), key=lambda path: path.relative_to(root).as_posix())
     for path in paths:
         if not path.is_file() or path.suffix.lower() not in _SUPPORTED_SUFFIXES:
+            continue
+        if path.name in _EXCLUDED_FILES:
             continue
         relative_parts = path.relative_to(root).parts
         if any(part in _EXCLUDED_DIRECTORIES for part in relative_parts):
