@@ -1,0 +1,43 @@
+{
+    "benchmark": {
+        "bm25_at_1": {
+            "case_count": 6,
+            "hit_rate": 0.167,
+            "mean_reciprocal_rank": 0.167,
+            "misses": [
+                "conversation-persistence",
+                "citation-deduplication",
+                "system-prompt-file",
+                "untrusted-rag-context",
+                "hybrid-rank-fusion"
+            ],
+            "recall": 0.167
+        },
+        "bm25_at_5": {
+            "case_count": 6,
+            "hit_rate": 0.5,
+            "mean_reciprocal_rank": 0.333,
+            "misses": [
+                "conversation-persistence",
+                "citation-deduplication",
+                "system-prompt-file"
+            ],
+            "recall": 0.417
+        }
+    },
+    "bm25": {
+        "conversation_query_ranks": {
+            "implementation_vocabulary": 1,
+            "natural_question": 16,
+            "synonym_question": 34
+        },
+        "identifier_top_chunk_ids": [
+            "app/tools/web_search.py#function-build_web_search_tool",
+            "tests/test_claude_client.py#function-test_stream_message_enables_configured_web_search",
+            "app/tools/web_search.py#module-1"
+        ]
+    },
+    "corpus": {
+        "chunk_count": 267
+    }
+}

@@ -85,6 +85,12 @@ def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directori
     (tmp_path / "tests" / "test_verify_guides.py").write_text(
         "def test_linter():\n    assert True\n", encoding="utf-8"
     )
+    (tmp_path / "tests" / "test_measure_facts.py").write_text(
+        "def test_ledger():\n    assert True\n", encoding="utf-8"
+    )
+    (tmp_path / "tests" / "test_verify_facts.py").write_text(
+        "def test_fact_references():\n    assert True\n", encoding="utf-8"
+    )
 
     chunks = ingest_path(tmp_path)
 

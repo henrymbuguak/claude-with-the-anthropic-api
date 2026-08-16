@@ -341,7 +341,14 @@ uv run python -m app.rag.demo "how does the bot remember what I said earlier" --
 34. app/conversation.py#class-Conversation
 ```
 
-The exact score is not the lesson and can shift when the corpus changes. The ranking demonstrates the limitation: using implementation vocabulary places the target first, while ordinary wording pushes the same target to ranks 16 and 34. A semantic retriever addresses this vocabulary mismatch by comparing vector representations rather than shared words.
+The exact score is not the lesson and can shift when the corpus changes. The
+ranking demonstrates the limitation: using implementation vocabulary places the
+target at rank <!-- fact bm25.conversation_query_ranks.implementation_vocabulary -->1<!-- /fact -->,
+while ordinary wording pushes the same target to ranks
+<!-- fact bm25.conversation_query_ranks.natural_question -->16<!-- /fact --> and
+<!-- fact bm25.conversation_query_ranks.synonym_question -->34<!-- /fact -->. A
+semantic retriever addresses this vocabulary mismatch by comparing vector
+representations rather than shared words.
 
 ## Troubleshooting
 
@@ -365,5 +372,5 @@ For the ranking model's derivation, read [The Probabilistic Relevance Framework:
 | -------- | ---------------------------------------------- |
 | Python   | 3.13.14; the repository requires 3.12 or later |
 | pytest   | 9.1.1                                          |
-| Corpus   | 267 chunks, excluding guide documentation and tooling |
+| Corpus   | <!-- fact corpus.chunk_count -->267<!-- /fact --> chunks, excluding guide documentation and tooling |
 | Verified | 2026-08-17                                     |

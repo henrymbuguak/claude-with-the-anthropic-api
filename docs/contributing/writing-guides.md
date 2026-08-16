@@ -110,6 +110,22 @@ A manual annotation is an explicit review obligation, not a passing automated ch
 
 Do not require exact generated prose from a model. Verify deterministic structure, source IDs, configuration, or sanitized metadata instead.
 
+## Cite measured facts
+
+Declare every stable numerical claim in `guides/plan.json`, then wrap the value
+shown to readers with its dotted ledger path:
+
+````text
+The corpus contains
+<!-- fact corpus.chunk_count -->267<!-- /fact --> chunks.
+````
+
+`harness.measure_facts` derives `docs/facts.json` from repository behavior.
+`harness.verify_facts` fails when the committed ledger drifts, a displayed value
+is wrong, a guide uses an undeclared fact, or a declared fact is not displayed.
+Keep exact BM25 scores out of the ledger because unrelated corpus changes can
+move them without changing the lesson.
+
 ## Review a guide
 
 Confirm that:
@@ -122,6 +138,7 @@ Confirm that:
 - Expected output excludes absolute paths, timing, and temporary names.
 - Internal links resolve and the page appears in `mkdocs.yml`.
 - `python -m harness.verify_guides "docs/guides/*.md" --execute --root .` passes.
+- `python -m harness.verify_facts --root .` passes.
 - `mkdocs build --strict` passes in CI.
 
 Machine verification establishes factual consistency. A human reviewer still decides whether the guide teaches clearly.

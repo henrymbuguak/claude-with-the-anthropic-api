@@ -22,7 +22,11 @@ _EXCLUDED_DIRECTORIES = {
     "dist",
     "harness",
 }
-_EXCLUDED_FILES = {"test_verify_guides.py"}
+_EXCLUDED_FILES = {
+    "test_measure_facts.py",
+    "test_verify_facts.py",
+    "test_verify_guides.py",
+}
 _SUPPORTED_SUFFIXES = {".md", ".markdown", ".py"}
 
 

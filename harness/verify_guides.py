@@ -345,6 +345,18 @@ def parse_approved_command(command: str) -> tuple[str, ...]:
                 raise ValueError(f"unsupported app.rag.demo argument: {option}")
         return arguments
 
+    if arguments[:5] == ("uv", "run", "python", "-m", "eval.rag_retrieval"):
+        remainder = list(arguments[5:])
+        if not remainder:
+            return arguments
+        if (
+            len(remainder) == 2
+            and remainder[0] == "--top-k"
+            and remainder[1].isdigit()
+        ):
+            return arguments
+        raise ValueError("eval.rag_retrieval arguments are not allowlisted")
+
     if arguments[:4] == ("uv", "run", "python", "-c"):
         if len(arguments) == 5 and arguments[4] in _ALLOWED_PYTHON_SNIPPETS:
             return arguments
@@ -364,7 +376,7 @@ def parse_approved_command(command: str) -> tuple[str, ...]:
             not argument.startswith("-")
             and not Path(argument).is_absolute()
             and ".." not in Path(argument).parts
-            and Path(argument).parts[0] in {"app", "harness", "tests"}
+            and Path(argument).parts[0] in {"app", "eval", "harness", "tests"}
             for argument in arguments[4:]
         ):
             return arguments

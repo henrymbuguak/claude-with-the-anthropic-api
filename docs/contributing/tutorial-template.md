@@ -9,6 +9,10 @@ Copy this structure when starting a numbered guide. Remove sections that genuine
 
 State what the reader produces and how long the tutorial takes.
 
+Wrap stable scalar claims with their declared fact path, for example:
+
+<!-- fact corpus.chunk_count -->267<!-- /fact -->
+
 ## Before you begin
 
 List software, configuration, API keys, and prerequisite guides.

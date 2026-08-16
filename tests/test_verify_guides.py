@@ -193,6 +193,23 @@ def test_parse_approved_command_rejects_shell_operators_and_unknown_snippets() -
         parse_approved_command("uv run ruff check C:/outside.py")
 
 
+def test_parse_approved_command_allows_offline_retrieval_benchmark() -> None:
+    assert parse_approved_command("uv run python -m eval.rag_retrieval") == (
+        "uv",
+        "run",
+        "python",
+        "-m",
+        "eval.rag_retrieval",
+    )
+    assert parse_approved_command(
+        "uv run python -m eval.rag_retrieval --top-k 1"
+    )[-2:] == ("--top-k", "1")
+    with pytest.raises(ValueError, match="not allowlisted"):
+        parse_approved_command(
+            "uv run python -m eval.rag_retrieval --modes hybrid"
+        )
+
+
 def test_run_check_uses_no_shell_no_sync_and_scrubs_secrets(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

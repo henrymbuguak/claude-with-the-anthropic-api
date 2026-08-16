@@ -1,0 +1,68 @@
+{
+    "series": {
+        "audience": "Python developers who are new to language-model applications",
+        "concept_budget": 3,
+        "style": "Google developer documentation style guide"
+    },
+    "guides": [
+        {
+            "build_from_empty": true,
+            "concepts": [
+                "term frequency",
+                "inverse document frequency",
+                "length normalization"
+            ],
+            "facts": [
+                "bm25.conversation_query_ranks.implementation_vocabulary",
+                "bm25.conversation_query_ranks.natural_question",
+                "bm25.conversation_query_ranks.synonym_question",
+                "corpus.chunk_count"
+            ],
+            "id": 10,
+            "output": "docs/guides/guide-10.md",
+            "prerequisites": [],
+            "primary_code": [
+                "app/rag/index_bm25.py"
+            ],
+            "status": "published",
+            "tests": [
+                "tests/test_rag_bm25.py"
+            ],
+            "tier": "offline",
+            "title": "Implement Okapi BM25 from scratch",
+            "type": "tutorial"
+        },
+        {
+            "build_from_empty": false,
+            "concepts": [
+                "Hit@k",
+                "Recall@k",
+                "mean reciprocal rank"
+            ],
+            "facts": [
+                "benchmark.bm25_at_1.hit_rate",
+                "benchmark.bm25_at_5.case_count",
+                "benchmark.bm25_at_5.hit_rate",
+                "benchmark.bm25_at_5.mean_reciprocal_rank",
+                "benchmark.bm25_at_5.recall",
+                "corpus.chunk_count"
+            ],
+            "id": 20,
+            "output": "docs/guides/guide-20.md",
+            "prerequisites": [
+                10
+            ],
+            "primary_code": [
+                "eval/rag_retrieval.py",
+                "eval/rag_cases.jsonl"
+            ],
+            "status": "published",
+            "tests": [
+                "tests/test_rag_retrieval_eval.py"
+            ],
+            "tier": "offline",
+            "title": "Benchmark retrieval quality",
+            "type": "tutorial"
+        }
+    ]
+}
