@@ -28,7 +28,7 @@ Build and inspect a multi-turn Claude CLI with streaming responses, native web s
 | Understand retrieval and generation boundaries | [Architecture](architecture.md)                                                       |
 | Inspect the implementation                     | [Repository on GitHub](https://github.com/henrymbuguak/claude-with-the-anthropic-api) |
 
-!!! note "Guide automation comes later"
-This first documentation phase publishes stable project documentation only.
-Executable tutorial verification and generated guides will be added after
-their verification harness is independently tested.
+!!! note "Guide automation is review-gated"
+Executable tutorial commands are verified in CI. The generation workflow can
+draft one planned offline tutorial as a pull request, but facts, curriculum,
+rendering, and human editorial review must all pass before it can merge.

@@ -158,6 +158,14 @@ Confirm that:
 
 Machine verification establishes factual consistency. A human reviewer still decides whether the guide teaches clearly.
 
+## Review documentation impact
+
+Each published guide declares its implementation ownership in `primary_code` in
+`guides/plan.json`. Guide checks compare changed files with those declarations
+and add an advisory pull-request summary naming guides that might need review.
+The report does not block a merge: it prompts the reviewer to decide whether
+the code change changes the tutorial's explanation, commands, or facts.
+
 ## Check the rendered site
 
 Install the browser test dependencies once:

@@ -7,7 +7,7 @@ on:
       - ".claude/skills/write-guide/**"
       - ".github/workflows/generate-guide.yml"
       - ".github/workflows/guides.yml"
-      - "app/rag/ingest.py"
+      - "app/rag/**"
       - "docs/contributing/**"
       - "docs/facts.json"
       - "docs/guides/**"
@@ -22,13 +22,14 @@ on:
       - "tests/test_verify_guide_flow.py"
       - "tests/test_verify_facts.py"
       - "tests/test_verify_guides.py"
+      - "tests/test_guide_impact.py"
   pull_request:
     branches: [main]
     paths:
       - ".claude/skills/write-guide/**"
       - ".github/workflows/generate-guide.yml"
       - ".github/workflows/guides.yml"
-      - "app/rag/ingest.py"
+      - "app/rag/**"
       - "docs/contributing/**"
       - "docs/facts.json"
       - "docs/guides/**"
@@ -43,6 +44,7 @@ on:
       - "tests/test_verify_guide_flow.py"
       - "tests/test_verify_facts.py"
       - "tests/test_verify_guides.py"
+      - "tests/test_guide_impact.py"
   workflow_dispatch:
 
 permissions:
@@ -55,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Install uv
@@ -73,6 +76,7 @@ jobs:
             tests/test_verify_guide_flow.py \
             tests/test_verify_facts.py \
             tests/test_verify_guides.py \
+            tests/test_guide_impact.py \
             -q
 
       - name: Lint documentation tooling
@@ -86,7 +90,20 @@ jobs:
             tests/test_validate_generation.py \
             tests/test_verify_guide_flow.py \
             tests/test_verify_facts.py \
-            tests/test_verify_guides.py
+            tests/test_verify_guides.py \
+            tests/test_guide_impact.py
+
+      - name: Report documentation impact
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="$(git rev-parse HEAD~1)"
+          fi
+          git diff --name-only "$BASE_SHA" HEAD > changed-paths.txt
+          uv run python -m harness.guide_impact \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            $(cat changed-paths.txt)
 
       - name: Verify measured facts and curriculum
         run: uv run python -m harness.verify_facts --root .

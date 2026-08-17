@@ -29,6 +29,7 @@ _EXCLUDED_DIRECTORIES = {
 }
 _EXCLUDED_FILES = {
     "test_generation_assets.py",
+    "test_guide_impact.py",
     "test_measure_facts.py",
     "test_prepare_generation.py",
     "test_validate_generation.py",
