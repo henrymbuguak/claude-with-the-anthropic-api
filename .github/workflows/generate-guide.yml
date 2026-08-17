@@ -95,19 +95,6 @@ jobs:
             push origin "$BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Create draft pull request
-        env:
-          GH_TOKEN: ${{ steps.claude.outputs.github_token }}
-          BRANCH_NAME: ${{ steps.publish.outputs.branch_name }}
-          GUIDE_TITLE: ${{ steps.guide.outputs.title }}
-        run: |
-          gh pr create \
-            --draft \
-            --base main \
-            --head "$BRANCH_NAME" \
-            --title "Guide: $GUIDE_TITLE" \
-            --body "Generated from guides/plan.json. Requires human editorial review."
-
       - name: Check out generated branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -134,3 +121,16 @@ jobs:
 
       - name: Build documentation strictly
         run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site
+
+      - name: Create validated draft pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH_NAME: ${{ steps.publish.outputs.branch_name }}
+          GUIDE_TITLE: ${{ steps.guide.outputs.title }}
+        run: |
+          gh pr create \
+            --draft \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --title "Guide: $GUIDE_TITLE" \
+            --body "Generated from guides/plan.json. Requires human editorial review."

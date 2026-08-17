@@ -58,11 +58,11 @@ The workflow:
 2. Invokes the repository `write-guide` skill under the workflow's hard timeout.
 3. Creates a workflow-owned branch named `guide/<id>-<run-id>` after Claude succeeds.
 4. Commits and pushes the generated changes with the Claude GitHub App token.
-5. Creates the pull request as a draft before validation.
-6. Rejects changes outside the selected guide, `mkdocs.yml`, `guides/plan.json`, and measured facts.
-7. Verifies the curriculum, fact ledger, all approved offline commands, and a strict MkDocs build.
+5. Rejects changes outside the selected guide, `mkdocs.yml`, `guides/plan.json`, and measured facts.
+6. Verifies the curriculum, fact ledger, all approved offline commands, and a strict MkDocs build.
+7. Creates a draft pull request with the scoped workflow token only after validation passes.
 
-A failed generation remains a draft for diagnosis. Do not merge a draft merely because the generation workflow is green. Apply the human review checklist in [Write and review guides](writing-guides.md).
+A failed generation leaves its branch for diagnosis but does not open a pull request. Do not merge a generated draft merely because the generation workflow is green. Apply the human review checklist in [Write and review guides](writing-guides.md).
 
 ## Troubleshoot setup
 
