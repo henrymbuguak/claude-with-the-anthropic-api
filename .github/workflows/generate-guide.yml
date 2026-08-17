@@ -114,13 +114,16 @@ jobs:
       - name: Verify measured facts
         run: uv run python -m harness.verify_facts --root .
 
+      - name: Verify guide learning flow
+        run: uv run python -m harness.verify_guide_flow --root .
+
       - name: Execute all approved offline guide checks
         run: |
           uv run python -m harness.verify_guides \
             "docs/guides/*.md" --execute --root .
 
       - name: Build documentation strictly
-        run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site
+        run: uvx --from mkdocs-material==9.6.20 --with mkdocs-redirects==1.2.2 mkdocs build --strict --site-dir site
 
       - name: Create validated draft pull request
         env:

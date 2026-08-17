@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from harness.verify_facts import verify_repository
+from harness.verify_guide_flow import verify_guide_flow
 from harness.verify_guides import lint_guide
 
 _PLAN_PATH = Path("guides/plan.json")
@@ -129,6 +130,10 @@ def validate_generation(
     )
     issues.extend(
         GenerationIssue(f"{issue.location}: {issue.message}") for issue in fact_issues
+    )
+    flow_issues = verify_guide_flow(root)
+    issues.extend(
+        GenerationIssue(f"{issue.location}: {issue.message}") for issue in flow_issues
     )
     return tuple(issues)
 

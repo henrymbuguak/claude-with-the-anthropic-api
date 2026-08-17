@@ -15,7 +15,7 @@ You need:
 - Python 3.12 or later.
 - [uv](https://docs.astral.sh/uv/).
 - A local clone with dependencies installed.
-- [Guide 10: Implement Okapi BM25 from scratch](guide-10.md).
+- [Implement Okapi BM25 from scratch](implement-okapi-bm25.md).
 
 You do not need an API key. The benchmark uses local chunks and deterministic
 labels from `eval/rag_cases.jsonl`.

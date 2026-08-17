@@ -31,7 +31,7 @@ jobs:
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
       - name: Build documentation
-        run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site
+        run: uvx --from mkdocs-material==9.6.20 --with mkdocs-redirects==1.2.2 mkdocs build --strict --site-dir site
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'

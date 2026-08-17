@@ -311,7 +311,7 @@ def test_execute_checks_stops_when_a_command_modifies_tracked_files(
 
 
 def test_real_guide_10_extracts_six_offline_checks() -> None:
-    guide = Path(__file__).parents[1] / "docs" / "guides" / "guide-10.md"
+    guide = Path(__file__).parents[1] / "docs" / "guides" / "implement-okapi-bm25.md"
 
     checks = extract_checks(guide)
 

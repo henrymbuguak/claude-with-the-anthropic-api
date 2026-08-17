@@ -28,6 +28,7 @@ _EXCLUDED_FILES = {
     "test_measure_facts.py",
     "test_prepare_generation.py",
     "test_validate_generation.py",
+    "test_verify_guide_flow.py",
     "test_verify_facts.py",
     "test_verify_guides.py",
 }

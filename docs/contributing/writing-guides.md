@@ -126,6 +126,20 @@ is wrong, a guide uses an undeclared fact, or a declared fact is not displayed.
 Keep exact BM25 scores out of the ledger because unrelated corpus changes can
 move them without changing the lesson.
 
+## Preserve the learning flow
+
+- Declare prerequisite IDs in `guides/plan.json` and link every available
+  prerequisite in the guide's **Before you begin** section.
+- Add published and draft guides to MkDocs in curriculum order. MkDocs renders
+  that order as the previous/next footer, so older articles do not need edits
+  whenever a later article is generated.
+- Keep a **Next steps** section in every tutorial. Link guides that already
+  exist, but mention planned guides without creating dead links.
+- Keep guide H1 text identical to the curriculum title and use descriptive file
+  names for stable URLs.
+- When renaming a published guide, add its old Markdown path to the MkDocs
+  `redirect_maps` configuration so existing bookmarks continue to work.
+
 ## Review a guide
 
 Confirm that:
@@ -139,6 +153,7 @@ Confirm that:
 - Internal links resolve and the page appears in `mkdocs.yml`.
 - `python -m harness.verify_guides "docs/guides/*.md" --execute --root .` passes.
 - `python -m harness.verify_facts --root .` passes.
+- `python -m harness.verify_guide_flow --root .` passes.
 - `mkdocs build --strict` passes in CI.
 
 Machine verification establishes factual consistency. A human reviewer still decides whether the guide teaches clearly.

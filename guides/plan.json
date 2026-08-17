@@ -22,7 +22,7 @@
                 "app/rag/ingest.py",
                 "app/rag/models.py"
             ],
-            "status": "draft",
+            "status": "published",
             "tests": [
                 "tests/test_rag_ingest.py"
             ],
@@ -44,9 +44,12 @@
                 "corpus.chunk_count"
             ],
             "id": 10,
-            "output": "docs/guides/guide-10.md",
+            "output": "docs/guides/implement-okapi-bm25.md",
             "prerequisites": [
                 9
+            ],
+            "redirects": [
+                "guides/guide-10.md"
             ],
             "primary_code": [
                 "app/rag/index_bm25.py"

@@ -517,7 +517,7 @@ than splitting it further, is the next tutorial's job.
 
 The next tutorial ranks these chunks with Okapi BM25, so a search over this
 same corpus returns the most relevant chunk first instead of in file order. Continue
-with [Implement Okapi BM25 from scratch](guide-10.md).
+with [Implement Okapi BM25 from scratch](implement-okapi-bm25.md).
 
 For the module used to build chunk boundaries, read the
 [`ast` module documentation](https://docs.python.org/3/library/ast.html).

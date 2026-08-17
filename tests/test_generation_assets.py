@@ -68,3 +68,15 @@ def test_workflows_use_node24_native_pinned_actions() -> None:
             assert UPLOAD_PAGES_ACTION in workflow
         if "actions/deploy-pages@" in workflow:
             assert DEPLOY_PAGES_ACTION in workflow
+
+
+def test_mkdocs_builds_install_redirect_plugin() -> None:
+    workflows = [
+        ROOT / ".github" / "workflows" / "generate-guide.yml",
+        ROOT / ".github" / "workflows" / "guides.yml",
+        ROOT / ".github" / "workflows" / "pages.yml",
+    ]
+
+    for workflow_path in workflows:
+        workflow = workflow_path.read_text(encoding="utf-8")
+        assert "--with mkdocs-redirects==1.2.2 mkdocs build --strict" in workflow

@@ -40,6 +40,9 @@ Never modify application code, tests, harness code, workflow files, dependencies
 - Use only offline commands. Do not access Anthropic, Voyage, or any other paid API.
 - Wrap every displayed scalar from `docs/facts.json` in a `fact` annotation and declare it in the selected plan entry.
 - Do not add a fact merely because it is interesting. Add only facts necessary to the lesson.
+- Link every declared prerequisite in `Before you begin` using its curriculum output path.
+- Add the guide to MkDocs in curriculum order. MkDocs previous/next navigation is the authoritative forward path.
+- Keep a `Next steps` section. Link only guides that already exist; mention planned guides without creating dead links.
 - Keep destructive build-from-empty steps manual. Never clear or overwrite source files in the checked-out repository.
 
 ## Verification sequence
@@ -48,6 +51,7 @@ Run these checks after writing:
 
 ```bash
 uv run python -m harness.verify_facts --root .
+uv run python -m harness.verify_guide_flow --root .
 uv run python -m harness.verify_guides "docs/guides/*.md"
 uv run pytest -q
 uv run ruff check .

@@ -67,14 +67,25 @@ def _make_candidate(tmp_path: Path, *, forbidden_change: bool = False) -> Path:
     existing.write_text(
         """# Existing
 
+## Before you begin
+
+None.
+
 <!-- verify cmd tier=offline output=none -->
 ```bash
 uv run pytest tests/test_existing.py -q
 ```
+
+## Next steps
+
+Continue.
 """,
         encoding="utf-8",
     )
-    (repository / "mkdocs.yml").write_text("nav:\n", encoding="utf-8")
+    (repository / "mkdocs.yml").write_text(
+        "nav:\n  - Guides:\n      - Existing: guides/existing.md\n",
+        encoding="utf-8",
+    )
     _git(repository, "add", ".")
     _git(repository, "commit", "-q", "-m", "base")
 
@@ -84,15 +95,25 @@ uv run pytest tests/test_existing.py -q
     guide.write_text(
         """# Chunk Python and Markdown for retrieval
 
+## Before you begin
+
+None.
+
 <!-- verify cmd tier=offline output=none -->
 ```bash
 uv run pytest tests/test_rag_ingest.py -q
 ```
+
+## Next steps
+
+Continue.
 """,
         encoding="utf-8",
     )
     (repository / "mkdocs.yml").write_text(
-        "nav:\n  - Chunk Python and Markdown: guides/chunk-python-and-markdown.md\n",
+        "nav:\n  - Guides:\n"
+        "      - Chunk Python and Markdown: guides/chunk-python-and-markdown.md\n"
+        "      - Existing: guides/existing.md\n",
         encoding="utf-8",
     )
     if forbidden_change:

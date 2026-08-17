@@ -13,6 +13,7 @@ You need:
 - Python 3.12 or later.
 - [uv](https://docs.astral.sh/uv/).
 - A local clone with dependencies installed.
+- [Chunk Python and Markdown for retrieval](chunk-python-and-markdown.md).
 - Familiarity with the repository's [retrieval architecture](../architecture.md).
 
 You do not need an API key. Every command in this tutorial runs locally.
@@ -362,7 +363,9 @@ representations rather than shared words.
 
 ## Next steps
 
-The next planned tutorial replaces lexical overlap with Voyage embeddings and cosine similarity. It measures whether semantic retrieval recovers the conversation-history chunk for natural wording.
+Continue with [Benchmark retrieval quality](benchmark-retrieval-quality.md) to
+measure where BM25 succeeds and misses. A planned semantic-retrieval tutorial
+then replaces lexical overlap with embeddings and cosine similarity.
 
 For the ranking model's derivation, read [The Probabilistic Relevance Framework: BM25 and Beyond](https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf).
 

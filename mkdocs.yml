@@ -49,6 +49,9 @@ markdown_extensions:
 
 plugins:
   - search
+  - redirects:
+      redirect_maps:
+        guides/guide-10.md: guides/implement-okapi-bm25.md
 
 nav:
   - Home: index.md
@@ -56,7 +59,7 @@ nav:
   - Architecture: architecture.md
   - Guides:
       - Chunk Python and Markdown for retrieval: guides/chunk-python-and-markdown.md
-      - Implement Okapi BM25 from scratch: guides/guide-10.md
+      - Implement Okapi BM25 from scratch: guides/implement-okapi-bm25.md
       - Benchmark retrieval quality: guides/benchmark-retrieval-quality.md
   - Contributing:
       - Write and review guides: contributing/writing-guides.md

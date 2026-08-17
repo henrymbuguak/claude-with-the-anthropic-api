@@ -19,6 +19,7 @@ on:
       - "tests/test_measure_facts.py"
       - "tests/test_prepare_generation.py"
       - "tests/test_validate_generation.py"
+      - "tests/test_verify_guide_flow.py"
       - "tests/test_verify_facts.py"
       - "tests/test_verify_guides.py"
   pull_request:
@@ -39,6 +40,7 @@ on:
       - "tests/test_measure_facts.py"
       - "tests/test_prepare_generation.py"
       - "tests/test_validate_generation.py"
+      - "tests/test_verify_guide_flow.py"
       - "tests/test_verify_facts.py"
       - "tests/test_verify_guides.py"
   workflow_dispatch:
@@ -68,6 +70,7 @@ jobs:
             tests/test_measure_facts.py \
             tests/test_prepare_generation.py \
             tests/test_validate_generation.py \
+            tests/test_verify_guide_flow.py \
             tests/test_verify_facts.py \
             tests/test_verify_guides.py \
             -q
@@ -81,14 +84,18 @@ jobs:
             tests/test_measure_facts.py \
             tests/test_prepare_generation.py \
             tests/test_validate_generation.py \
+            tests/test_verify_guide_flow.py \
             tests/test_verify_facts.py \
             tests/test_verify_guides.py
 
       - name: Verify measured facts and curriculum
         run: uv run python -m harness.verify_facts --root .
 
+      - name: Verify guide learning flow
+        run: uv run python -m harness.verify_guide_flow --root .
+
       - name: Verify approved offline guide commands
         run: uv run python -m harness.verify_guides "docs/guides/*.md" --execute --root .
 
       - name: Build documentation strictly
-        run: uvx --from mkdocs-material==9.6.20 mkdocs build --strict --site-dir site
+        run: uvx --from mkdocs-material==9.6.20 --with mkdocs-redirects==1.2.2 mkdocs build --strict --site-dir site

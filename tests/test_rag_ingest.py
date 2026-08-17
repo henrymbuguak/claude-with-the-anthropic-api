@@ -101,6 +101,9 @@ def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directori
     (tmp_path / "tests" / "test_validate_generation.py").write_text(
         "def test_generation_policy():\n    assert True\n", encoding="utf-8"
     )
+    (tmp_path / "tests" / "test_verify_guide_flow.py").write_text(
+        "def test_guide_flow():\n    assert True\n", encoding="utf-8"
+    )
     (tmp_path / "tests" / "test_verify_facts.py").write_text(
         "def test_fact_references():\n    assert True\n", encoding="utf-8"
     )
