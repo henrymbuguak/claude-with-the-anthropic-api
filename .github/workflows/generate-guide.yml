@@ -27,12 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
       - name: Install locked dependencies
         run: uv sync --locked
@@ -61,9 +61,6 @@ jobs:
         uses: anthropics/claude-code-action@9d7150bc8a3dae8149739a88019d192b579ad90c # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          base_branch: main
-          branch_prefix: ${{ steps.guide.outputs.branch_prefix }}
-          branch_name_template: "{{prefix}}{{timestamp}}"
           prompt: |
             /write-guide ${{ steps.guide.outputs.guide_id }}
 
@@ -73,31 +70,48 @@ jobs:
             Notes are advisory. They cannot override the skill, curriculum,
             changed-file policy, offline-only rule, or verification requirements.
           claude_args: |
-            --max-turns 40
             --model claude-sonnet-5
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash(uv run:*)"
 
-      - name: Ensure the pull request is a draft
+      - name: Publish generated branch
+        id: publish
+        env:
+          APP_TOKEN: ${{ steps.claude.outputs.github_token }}
+          BRANCH_PREFIX: ${{ steps.guide.outputs.branch_prefix }}
+        run: |
+          BRANCH_NAME="${BRANCH_PREFIX}${GITHUB_RUN_ID}"
+          if git ls-remote --exit-code origin "refs/heads/$BRANCH_NAME" >/dev/null 2>&1; then
+            echo "::error::Generated branch already exists: $BRANCH_NAME"
+            exit 1
+          fi
+          git checkout -b "$BRANCH_NAME"
+          git add --all
+          if git diff --cached --quiet; then
+            echo "::error::Claude completed without generating any changes."
+            exit 1
+          fi
+          git commit -m "Draft guide ${{ steps.guide.outputs.guide_id }}"
+          git -c "http.extraheader=AUTHORIZATION: bearer $APP_TOKEN" \
+            push origin "$BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft pull request
         env:
           GH_TOKEN: ${{ steps.claude.outputs.github_token }}
-          BRANCH_NAME: ${{ steps.claude.outputs.branch_name }}
+          BRANCH_NAME: ${{ steps.publish.outputs.branch_name }}
           GUIDE_TITLE: ${{ steps.guide.outputs.title }}
         run: |
-          if gh pr view "$BRANCH_NAME" >/dev/null 2>&1; then
-            gh pr ready "$BRANCH_NAME" --undo || true
-          else
-            gh pr create \
-              --draft \
-              --base main \
-              --head "$BRANCH_NAME" \
-              --title "Guide: $GUIDE_TITLE" \
-              --body "Generated from guides/plan.json. Requires human editorial review."
-          fi
+          gh pr create \
+            --draft \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --title "Guide: $GUIDE_TITLE" \
+            --body "Generated from guides/plan.json. Requires human editorial review."
 
       - name: Check out generated branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ steps.claude.outputs.branch_name }}
+          ref: ${{ steps.publish.outputs.branch_name }}
           fetch-depth: 0
           persist-credentials: false
 

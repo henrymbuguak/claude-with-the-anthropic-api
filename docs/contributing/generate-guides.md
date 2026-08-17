@@ -55,11 +55,12 @@ gh workflow run generate-guide.yml -f guide_id=9 -f notes="Emphasize stable chun
 The workflow:
 
 1. Rejects unknown, published, keyed, or already-created guides before calling Claude.
-2. Invokes the repository `write-guide` skill with a maximum turn limit.
-3. Uses the Claude action's actual `branch_name` output instead of guessing its branch.
-4. Creates or converts the pull request to draft before validation.
-5. Rejects changes outside the selected guide, `mkdocs.yml`, `guides/plan.json`, and measured facts.
-6. Verifies the curriculum, fact ledger, all approved offline commands, and a strict MkDocs build.
+2. Invokes the repository `write-guide` skill under the workflow's hard timeout.
+3. Creates a workflow-owned branch named `guide/<id>-<run-id>` after Claude succeeds.
+4. Commits and pushes the generated changes with the Claude GitHub App token.
+5. Creates the pull request as a draft before validation.
+6. Rejects changes outside the selected guide, `mkdocs.yml`, `guides/plan.json`, and measured facts.
+7. Verifies the curriculum, fact ledger, all approved offline commands, and a strict MkDocs build.
 
 A failed generation remains a draft for diagnosis. Do not merge a draft merely because the generation workflow is green. Apply the human review checklist in [Write and review guides](writing-guides.md).
 
