@@ -345,12 +345,12 @@ Remove-Item app/rag/index_vector_reference.txt
 
 ## Break it on purpose
 
-Rerun the test that proves cosine similarity stays inside a fixed range:
+Run the focused test that deliberately passes incompatible vectors:
 
 <!-- verify cmd tier=offline -->
 
 ```powershell
-uv run pytest tests/test_rag_index_vector.py::test_vector_search_ranks_cosine_similarity_and_breaks_ties -v
+uv run pytest tests/test_rag_index_vector.py::test_vector_index_rejects_invalid_vectors -v
 ```
 
 <!-- verify expect match=contains -->
@@ -359,15 +359,17 @@ uv run pytest tests/test_rag_index_vector.py::test_vector_search_ranks_cosine_si
 PASSED
 ```
 
-That test asserts an identical vector scores `1.0` and an orthogonal vector
-scores `0.0`. Cosine similarity can never leave the range -1 to 1, regardless
-of corpus size. Okapi BM25 has no such ceiling: the previous tutorial's
-scores grew with term rarity and corpus size and had no fixed maximum. A
-lexical score and a cosine similarity score are therefore incomparable
-numbers. Adding or averaging them directly would let whichever retriever
-produces larger raw numbers dominate every ranking, regardless of which
-result is actually more relevant. Combining the two rankings safely means
-comparing ranks, not raw scores.
+The test first gives a two-dimensional index a one-dimensional vector and
+asserts that `VectorIndexError` reports the dimension mismatch. It then gives
+the index an all-zero vector and asserts that the missing direction is rejected.
+Both failures protect the cosine-similarity calculation from inputs for which
+it is undefined.
+
+Even for valid vectors, cosine similarity stays in the range -1 to 1. Okapi
+BM25 has no fixed ceiling, so lexical and vector scores remain incomparable.
+Adding or averaging them directly would let whichever retriever produces larger
+raw numbers dominate. Combining the rankings safely means comparing ranks, not
+raw scores.
 
 ## Troubleshooting
 
