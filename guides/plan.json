@@ -22,7 +22,7 @@
                 "app/rag/ingest.py",
                 "app/rag/models.py"
             ],
-            "status": "planned",
+            "status": "draft",
             "tests": [
                 "tests/test_rag_ingest.py"
             ],
