@@ -60,6 +60,7 @@ nav:
   - Guides:
       - Chunk Python and Markdown for retrieval: guides/chunk-python-and-markdown.md
       - Implement Okapi BM25 from scratch: guides/implement-okapi-bm25.md
+      - Build and search a vector index: guides/build-vector-index.md
       - Benchmark retrieval quality: guides/benchmark-retrieval-quality.md
   - Contributing:
       - Write and review guides: contributing/writing-guides.md
