@@ -32,6 +32,8 @@ def test_generation_workflow_is_manual_pinned_and_policy_gated() -> None:
     assert "anthropics/claude-code-action@9d7150bc8a3dae8149739a88019d192b579ad90c" in workflow
     assert "github_token:" not in workflow
     assert "steps.publish.outputs.branch_name" in workflow
+    assert "GH_TOKEN: ${{ github.token }}" in workflow
+    assert "GH_TOKEN: ${{ steps.claude.outputs.github_token }}" not in workflow
     assert "${BRANCH_PREFIX}${GITHUB_RUN_ID}" in workflow
     assert "harness.prepare_generation" in workflow
     assert "harness.validate_generation" in workflow
@@ -43,8 +45,8 @@ def test_generation_workflow_is_manual_pinned_and_policy_gated() -> None:
     assert 'harness.verify_guides \\\n            "docs/guides/*.md" --execute --root .' in workflow
     assert "gh pr create" in workflow
     assert "--draft" in workflow
-    assert workflow.index("Create draft pull request") < workflow.index(
-        "Enforce generated-file policy"
+    assert workflow.index("Build documentation strictly") < workflow.index(
+        "Create validated draft pull request"
     )
 
 
