@@ -3,7 +3,7 @@
 The application keeps generation, conversation persistence, retrieval, grounding, and evaluation in separate modules. Local retrieval is opt-in; disabling it leaves the streaming chat path unchanged.
 
 ```mermaid
-flowchart LR
+flowchart TB
     USER[CLI user] --> MAIN[main.py]
     MAIN <--> HISTORY[(Conversation JSON)]
     MAIN --> RETRIEVER

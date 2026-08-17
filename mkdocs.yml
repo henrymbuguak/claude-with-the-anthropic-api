@@ -5,6 +5,13 @@ repo_url: https://github.com/henrymbuguak/claude-with-the-anthropic-api
 repo_name: henrymbuguak/claude-with-the-anthropic-api
 edit_uri: edit/main/docs/
 
+extra_javascript:
+  - path: javascripts/mermaid.mjs
+    type: module
+
+extra_css:
+  - stylesheets/extra.css
+
 theme:
   name: material
   features:
@@ -44,7 +51,7 @@ markdown_extensions:
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
-          class: mermaid
+          class: mermaid-source
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 plugins:
