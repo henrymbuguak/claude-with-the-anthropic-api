@@ -157,3 +157,24 @@ Confirm that:
 - `mkdocs build --strict` passes in CI.
 
 Machine verification establishes factual consistency. A human reviewer still decides whether the guide teaches clearly.
+
+## Check the rendered site
+
+Install the browser test dependencies once:
+
+```powershell
+npm ci
+npx playwright install chromium
+```
+
+Build the site and run the desktop and mobile smoke tests:
+
+```powershell
+mkdocs build --strict --site-dir site
+npm run test:docs
+```
+
+The smoke tests discover rendered content pages, require a visible primary
+heading, verify that Mermaid source becomes a nonempty SVG, and reject
+page-level horizontal overflow on mobile. Failed runs retain screenshots,
+traces, and an HTML report in CI.

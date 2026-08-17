@@ -22,6 +22,10 @@ _EXCLUDED_DIRECTORIES = {
     "docs",
     "dist",
     "harness",
+    "node_modules",
+    "playwright-report",
+    "site",
+    "test-results",
 }
 _EXCLUDED_FILES = {
     "test_generation_assets.py",

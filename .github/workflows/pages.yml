@@ -7,12 +7,20 @@ on:
       - ".github/workflows/pages.yml"
       - "docs/**"
       - "mkdocs.yml"
+      - "package-lock.json"
+      - "package.json"
+      - "playwright.config.mjs"
+      - "tests/docs/**"
   pull_request:
     branches: [main]
     paths:
       - ".github/workflows/pages.yml"
       - "docs/**"
       - "mkdocs.yml"
+      - "package-lock.json"
+      - "package.json"
+      - "playwright.config.mjs"
+      - "tests/docs/**"
   workflow_dispatch:
 
 concurrency:
@@ -22,6 +30,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -30,8 +39,33 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
+      - name: Install Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install browser test dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
       - name: Build documentation
         run: uvx --from mkdocs-material==9.6.20 --with mkdocs-redirects==1.2.2 mkdocs build --strict --site-dir site
+
+      - name: Verify rendered documentation
+        run: npm run test:docs
+
+      - name: Upload rendering failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: documentation-rendering-failure
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'

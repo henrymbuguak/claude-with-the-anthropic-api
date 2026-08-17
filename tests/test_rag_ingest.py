@@ -85,6 +85,17 @@ def test_ingest_path_discovers_supported_files_and_excludes_non_corpus_directori
     (tmp_path / "harness" / "verify.py").write_text(
         "def verify():\n    return True\n", encoding="utf-8"
     )
+    for generated_directory in (
+        "node_modules",
+        "playwright-report",
+        "site",
+        "test-results",
+    ):
+        directory = tmp_path / generated_directory
+        directory.mkdir()
+        (directory / "ignored.md").write_text(
+            "# Generated output\nIgnore me.\n", encoding="utf-8"
+        )
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "test_generation_assets.py").write_text(
         "def test_generation_assets():\n    assert True\n", encoding="utf-8"
