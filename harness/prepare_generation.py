@@ -9,6 +9,7 @@ from pathlib import Path
 
 def select_planned_guide(plan_path: Path, guide_id: int) -> dict:
     """Return one offline planned guide or raise a clear validation error."""
+    plan_path = plan_path.resolve()
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     guide = next(
         (entry for entry in plan.get("guides", []) if entry.get("id") == guide_id),
@@ -25,7 +26,12 @@ def select_planned_guide(plan_path: Path, guide_id: int) -> dict:
         raise ValueError("guide output must be under docs/guides")
     if output.stem.startswith("guide-"):
         raise ValueError("guide output must use a descriptive filename")
-    if output.exists():
+    repository_root = (
+        plan_path.parent.parent
+        if plan_path.parent.name == "guides"
+        else plan_path.parent
+    )
+    if (repository_root / output).exists():
         raise ValueError(f"guide output already exists: {output}")
     return guide
 
