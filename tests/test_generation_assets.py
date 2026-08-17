@@ -5,6 +5,8 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 CHECKOUT_ACTION = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
 SETUP_UV_ACTION = "astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d"
+UPLOAD_PAGES_ACTION = "actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9"
+DEPLOY_PAGES_ACTION = "actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128"
 
 
 def test_write_guide_skill_has_discoverable_frontmatter_and_boundaries() -> None:
@@ -54,7 +56,13 @@ def test_workflows_use_node24_native_pinned_actions() -> None:
         workflow = workflow_path.read_text(encoding="utf-8")
         assert "actions/checkout@v4" not in workflow
         assert "astral-sh/setup-uv@v4" not in workflow
+        assert "actions/upload-pages-artifact@v3" not in workflow
+        assert "actions/deploy-pages@v4" not in workflow
         if "actions/checkout@" in workflow:
             assert CHECKOUT_ACTION in workflow
         if "astral-sh/setup-uv@" in workflow:
             assert SETUP_UV_ACTION in workflow
+        if "actions/upload-pages-artifact@" in workflow:
+            assert UPLOAD_PAGES_ACTION in workflow
+        if "actions/deploy-pages@" in workflow:
+            assert DEPLOY_PAGES_ACTION in workflow
