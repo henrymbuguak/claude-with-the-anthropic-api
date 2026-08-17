@@ -79,7 +79,7 @@
                 "app/rag/index_vector.py",
                 "app/rag/models.py"
             ],
-            "status": "draft",
+            "status": "published",
             "tests": [
                 "tests/test_rag_index_vector.py"
             ],
@@ -105,7 +105,7 @@
                 "app/rag/rrf.py",
                 "app/rag/models.py"
             ],
-            "status": "planned",
+            "status": "published",
             "tests": [
                 "tests/test_rag_rrf.py"
             ],
@@ -161,7 +161,7 @@
             "primary_code": [
                 "eval/evaluators.py"
             ],
-            "status": "planned",
+            "status": "published",
             "tests": [
                 "tests/test_evaluators.py"
             ],

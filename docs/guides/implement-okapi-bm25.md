@@ -363,9 +363,9 @@ representations rather than shared words.
 
 ## Next steps
 
-Continue with [Benchmark retrieval quality](benchmark-retrieval-quality.md) to
-measure where BM25 succeeds and misses. A planned semantic-retrieval tutorial
-then replaces lexical overlap with embeddings and cosine similarity.
+Continue with [Build and search a vector index](build-vector-index.md) to replace
+lexical overlap with cosine similarity over vectors. The later fusion tutorial
+then combines both rankings without comparing their incompatible raw scores.
 
 For the ranking model's derivation, read [The Probabilistic Relevance Framework: BM25 and Beyond](https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf).
 

@@ -37,7 +37,7 @@ def _write_repository(
         json.dumps(plan), encoding="utf-8"
     )
     (guide_dir / "first.md").write_text(
-        "# First\n\n## Before you begin\n\nNone.\n\n## Next steps\n\nContinue.\n",
+        "# First\n\n## Before you begin\n\nNone.\n\n## Next steps\n\n[Second](second.md).\n",
         encoding="utf-8",
     )
     link = "[First](first.md)" if prerequisite_link else "First"
@@ -71,6 +71,19 @@ def test_flow_requires_curriculum_navigation_order(tmp_path: Path) -> None:
     issues = verify_guide_flow(tmp_path)
 
     assert any("navigation order" in issue.message for issue in issues)
+
+
+def test_flow_requires_next_guide_link(tmp_path: Path) -> None:
+    _write_repository(tmp_path)
+    first = tmp_path / "docs" / "guides" / "first.md"
+    first.write_text(
+        "# First\n\n## Before you begin\n\nNone.\n\n## Next steps\n\nContinue.\n",
+        encoding="utf-8",
+    )
+
+    issues = verify_guide_flow(tmp_path)
+
+    assert any("Next steps must link next guide 2" in issue.message for issue in issues)
 
 
 def test_flow_reports_broken_local_links(tmp_path: Path) -> None:

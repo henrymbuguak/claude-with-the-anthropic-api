@@ -106,7 +106,7 @@ uv run pytest tests/test_rag_ingest.py -q
 
 ## Next steps
 
-Continue.
+[Existing](existing.md).
 """,
         encoding="utf-8",
     )

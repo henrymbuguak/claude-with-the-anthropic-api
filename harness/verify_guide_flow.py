@@ -134,7 +134,7 @@ def verify_guide_flow(
                 FlowIssue(str(plan_path), f"redirect source still exists: {redirect}")
             )
 
-    for guide in available:
+    for available_index, guide in enumerate(available):
         output = Path(guide["output"])
         path = root / output
         text = path.read_text(encoding="utf-8")
@@ -179,6 +179,17 @@ def verify_guide_flow(
                     FlowIssue(
                         location,
                         f"Before you begin must link prerequisite guide {prerequisite_id}",
+                    )
+                )
+        if available_index + 1 < len(available):
+            next_guide = available[available_index + 1]
+            next_path = (root / next_guide["output"]).resolve()
+            next_targets = set(_local_targets(next_steps or "", path, root))
+            if next_path not in next_targets:
+                issues.append(
+                    FlowIssue(
+                        location,
+                        f"Next steps must link next guide {next_guide['id']}",
                     )
                 )
     return tuple(issues)

@@ -61,7 +61,9 @@ nav:
       - Chunk Python and Markdown for retrieval: guides/chunk-python-and-markdown.md
       - Implement Okapi BM25 from scratch: guides/implement-okapi-bm25.md
       - Build and search a vector index: guides/build-vector-index.md
+      - Merge rankings with Reciprocal Rank Fusion: guides/merge-rankings-with-rrf.md
       - Benchmark retrieval quality: guides/benchmark-retrieval-quality.md
+      - Test model output with deterministic rules: guides/test-model-output-with-rules.md
   - Contributing:
       - Write and review guides: contributing/writing-guides.md
       - Tutorial template: contributing/tutorial-template.md

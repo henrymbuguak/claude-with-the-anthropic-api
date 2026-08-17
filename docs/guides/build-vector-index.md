@@ -383,10 +383,9 @@ raw scores.
 
 ## Next steps
 
-A planned tutorial, Merge rankings with Reciprocal Rank Fusion, combines this
-index's cosine-similarity ranking with the BM25 ranking from
-[Implement Okapi BM25 from scratch](implement-okapi-bm25.md) by comparing
-ranks instead of the incomparable raw scores this tutorial exposed.
+Continue with [Merge rankings with Reciprocal Rank Fusion](merge-rankings-with-rrf.md)
+to combine this index's cosine-similarity ranking with the BM25 ranking by
+comparing ranks instead of the incomparable raw scores this tutorial exposed.
 
 For the underlying formula, read the
 [Cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity) reference.

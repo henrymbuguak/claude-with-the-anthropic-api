@@ -190,9 +190,10 @@ must name its cutoff: Hit@1 and Hit@5 describe different user experiences.
 
 ## Next steps
 
-Use the benchmark to compare BM25 with vector and hybrid retrieval on the same
-case set. Keyed comparisons belong in a protected environment because they use
-Voyage embeddings and can incur cost.
+Continue with [Test model output with deterministic rules](test-model-output-with-rules.md)
+to apply the same repeatable-evaluation mindset to generated responses. Keyed
+retrieval comparisons belong in a protected environment because they use Voyage
+embeddings and can incur cost.
 
 For metric definitions and evaluation context, read the
 [Information Retrieval evaluation documentation](https://en.wikipedia.org/wiki/Evaluation_measures_%28information_retrieval%29).
